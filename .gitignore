@@ -1,0 +1,8 @@
+.vs/
+.vscode/
+node_modules/
+token
+credentials.json
+sheet.json
+data/
+ssl/

@@ -1,0 +1,28 @@
+{
+  "name": "rubika-alumni",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Alumni.js",
+  "dependencies": {
+    "discord.js": "^12.5.3",
+    "express": "^4.17.1",
+    "googleapis": "^39.2.0",
+    "node-schedule": "^1.3.3",
+    "socket.io": "^2.4.1",
+    "socket.io-client": "^2.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eresia/Rubika-Alumni.git"
+  },
+  "author": "Bastien Lepesant",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Eresia/Rubika-Alumni/issues"
+  },
+  "homepage": "https://github.com/Eresia/Rubika-Alumni#readme"
+}
