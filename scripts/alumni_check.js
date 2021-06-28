@@ -35,6 +35,12 @@ module.exports = {
 	{
 		let lowerName = name.toLowerCase();
 
+		if(!(serverId in google.sheetData))
+		{
+			console.log("No access to google user data");
+			return null;
+		}
+
 		for(let i = 0; i < google.sheetData[serverId].length; i++)
 		{
 			let lowerSheetName1 = google.sheetData[serverId][i].firstName.toLowerCase();
@@ -64,6 +70,11 @@ module.exports = {
 
 	askNewMember : function(data, guildMember, firstMessage = true)
 	{
+		if(guildMember.bot)
+		{
+			return;
+		}
+
 		guildMember.createDM().then(dmChannel =>
 			{
 
@@ -97,7 +108,7 @@ module.exports = {
 
 			dmChannel.awaitMessages(filter, {max: 1}).then(async function(collected)
 				{
-					await applyNewMember(data, guildMember, collected.first().content);
+					await module.exports.applyNewMember(data, guildMember, collected.first().content);
 					discordUtils.reactRightMessage(collected.first(), confirmMessage);
 				});
 			}
@@ -121,19 +132,24 @@ module.exports = {
 		module.exports.registerUser(data, guildMember, user);
 	},
 
-	removeMember : async function(data, guildMember)
+	removeMember : async function(data, guildMember, changeGuildSettings = false)
 	{
 		let dataGuild = data[guildMember.guild.id];
 
 		let user = module.exports.getUserByTag(guildMember.guild.id, guildMember.user.tag);
-		guildMember.roles.remove(dataGuild.validRole);
-		guildMember.roles.add(dataGuild.invalidRole);
 
-		try {
-			await guildMember.setNickname(null);
-		} catch(err) {
-			console.error(err);
+		if(changeGuildSettings)
+		{
+			guildMember.roles.remove(dataGuild.validRole);
+			guildMember.roles.add(dataGuild.invalidRole);
+
+			try {
+				await guildMember.setNickname(null);
+			} catch(err) {
+				console.error(err);
+			}
 		}
+		
 
 		module.exports.unregisterUser(data, guildMember, user);
 	},

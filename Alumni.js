@@ -136,11 +136,11 @@ bot.on('ready', function () {
 						{
 							if(user.check == "Non")
 							{
-								discordUtils.reactRightMessage(message, "Name \"" + user.firsName + " " + user.lastName + "\" exists in database but is not registered");
+								discordUtils.reactRightMessage(message, "Name \"" + user.firstName + " " + user.lastName + "\" exists in database but is not registered");
 							}
 							else
 							{
-								discordUtils.reactRightMessage(message, "Name \"" + user.firsName + " " + user.lastName + "\" exists in database and is registered");
+								discordUtils.reactRightMessage(message, "Name \"" + user.firstName + " " + user.lastName + "\" exists in database and is registered");
 							}
 						}
 						break;
@@ -237,7 +237,7 @@ bot.on('ready', function () {
 								break;
 							}
 	
-							alumni.removeMember(data, removeMember);
+							alumni.removeMember(data, removeMember, true);
 							
 							discordUtils.reactRightMessage(message);
 							break;
@@ -282,7 +282,7 @@ bot.on('ready', function () {
 
 	bot.on("guildMemberRemove", function(guildMember)
 	{
-		alumni.removeMember(data, guildMember);
+		alumni.removeMember(data, guildMember, false);
 	});
 });
 
