@@ -85,8 +85,10 @@ function getSheetInformations(auth, info) {
 		let lastName = -1;
 		let check = -1;
 		let pseudo = -1;
+		let id = -1;
 		let checkSheetLetter;
 		let pseudoSheetLetter;
+		let idSheetLetter;
 
 		let firstCell = info.range.split(':')[0];
 		let sheetFirstNumber = parseInt(firstCell.substring(1));
@@ -114,6 +116,12 @@ function getSheetInformations(auth, info) {
 
 					pseudoSheetLetter = String.fromCharCode(firstCell.charCodeAt(0) + i);
 					break;
+
+				case info.idName:
+					id = i;
+
+					idSheetLetter = String.fromCharCode(firstCell.charCodeAt(0) + i);
+					break;
 			}
 		}
 
@@ -137,17 +145,25 @@ function getSheetInformations(auth, info) {
 			return console.log("No Pseudo Name");
 		}
 
+		if(id == -1)
+		{
+			return console.log("No Id Name");
+		}
+
 		module.exports.sheetData[info.serverId] = [];
 
 		for(let i = 1; i < res.data.values.length; i++)
 		{
 			let user = {};
+			user.index = i - 1;
 			user.firstName = res.data.values[i][firstName];
 			user.lastName = res.data.values[i][lastName];
 			user.check = res.data.values[i][check];
 			user.pseudo = res.data.values[i][pseudo];
+			user.id = res.data.values[i][id];
 			user.checkCell = checkSheetLetter + (sheetFirstNumber + i);
 			user.pseudoCell = pseudoSheetLetter + (sheetFirstNumber + i);
+			user.idCell = idSheetLetter + (sheetFirstNumber + i);
 
 			module.exports.sheetData[info.serverId].push(user);
 		}

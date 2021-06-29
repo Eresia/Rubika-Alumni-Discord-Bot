@@ -13,6 +13,7 @@ const first_name_cell = "Prénom";
 const last_name_cell = "Nom";
 const check_cell = "Enregistré";
 const pseudo_cell = "Pseudo";
+const id_cell = "Id";
 
 module.exports = {
 	updateSheet : function(data, serverId)
@@ -27,6 +28,7 @@ module.exports = {
 		info.lastName = last_name_cell;
 		info.checkName = check_cell;
 		info.pseudoName = pseudo_cell;
+		info.idName = id_cell;
 
 		google.updateSheetData(info);
 	},
@@ -55,6 +57,19 @@ module.exports = {
 		return null;
 	},
 
+	getUserById : function(serverId, id)
+	{
+		for(let i = 0; i < google.sheetData[serverId].length; i++)
+		{
+			if(id == google.sheetData[serverId][i].id)
+			{
+				return google.sheetData[serverId][i];
+			}
+		}
+
+		return null;
+	},
+
 	getUserByTag : function(serverId, tag)
 	{
 		for(let i = 0; i < google.sheetData[serverId].length; i++)
@@ -70,7 +85,7 @@ module.exports = {
 
 	askNewMember : function(data, guildMember, firstMessage = true)
 	{
-		if(guildMember.bot)
+		if(guildMember.user.bot)
 		{
 			return;
 		}
@@ -100,6 +115,7 @@ module.exports = {
 				if(user.check == check_registered)
 				{
 					dmChannel.send(alreadyRegisteredMessage);
+					console.log(message.author.tag + " try to use already registered name " + user.firstName + " " + user.lastName);
 					return false;
 				}
 
@@ -126,7 +142,7 @@ module.exports = {
 		try {
 			await guildMember.setNickname(user.firstName + " " + user.lastName);
 		} catch(err) {
-			console.error(err);
+			console.log("Can't change nickname of " + guildMember.user.tag);
 		}
 
 		module.exports.registerUser(data, guildMember, user);
@@ -136,7 +152,7 @@ module.exports = {
 	{
 		let dataGuild = data[guildMember.guild.id];
 
-		let user = module.exports.getUserByTag(guildMember.guild.id, guildMember.user.tag);
+		let user = module.exports.getUserById(guildMember.guild.id, guildMember.user.id);
 
 		if(changeGuildSettings)
 		{
@@ -146,10 +162,14 @@ module.exports = {
 			try {
 				await guildMember.setNickname(null);
 			} catch(err) {
-				console.error(err);
+				console.log("Can't change nickname of " + guildMember.user.tag);
 			}
 		}
-		
+
+		if(user == null)
+		{
+			return;
+		}
 
 		module.exports.unregisterUser(data, guildMember, user);
 	},
@@ -157,20 +177,21 @@ module.exports = {
 	registerUser : function(data, guildMember, user)
 	{
 		let pseudo = guildMember.user.tag;
+		let id = guildMember.user.id;
 		createAndSendSheetInformations(data, guildMember, user.checkCell, check_registered);
 		createAndSendSheetInformations(data, guildMember, user.pseudoCell, pseudo);
+		createAndSendSheetInformations(data, guildMember, user.idCell, id);
 
 		user.check = check_registered;
 		user.pseudo = pseudo;
+		user.id = id;
 	},
 
 	unregisterUser : function(data, guildMember, user)
 	{
 		createAndSendSheetInformations(data, guildMember, user.checkCell, check_no_registered);
-		createAndSendSheetClear(data, guildMember, user.pseudoCell);
 
 		user.check = check_no_registered;
-		user.pseudo = "";
 	}
 }
 
