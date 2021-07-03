@@ -29,7 +29,7 @@ bot.on('ready', function () {
 
 	checkInvalidRoles(bot);
 
-	bot.on('message', function(message) {
+	bot.on('message', async function(message) {
 
 		if(message.author.bot)
 		{
@@ -184,7 +184,11 @@ bot.on('ready', function () {
 
 						if(commands.length > 3)
 						{
-							alumni.applyNewMember(data, newMember, message.content.substring(commands[0].length + commands[1].length + commands[2].length + 3));
+							if(!(await alumni.applyNewMember(data, newMember, message.content.substring(commands[0].length + commands[1].length + commands[2].length + 3))))
+							{
+								discordUtils.reactWrongMessage(message, "Name already registered");
+								break;
+							}
 						}
 						else
 						{
@@ -284,6 +288,20 @@ bot.on('ready', function () {
 	{
 		alumni.removeMember(data, guildMember, false);
 	});
+
+	let ruleEmbed = new Discord.MessageEmbed();
+	ruleEmbed.setTitle("Règles du serveur");
+
+	ruleEmbed.addField("\u200B", "```css\n1 - Prénom / Nom en pseudo.\n```");
+	ruleEmbed.addField("\u200B", "```css\n2 - Pas de contenu NSFW / illégal (message/vocal/pseudo/photo de profil).\n```");
+	ruleEmbed.addField("\u200B", "```css\n3 - Aucune attaque personnelle / harcèlement / sexisme / racisme / discours de haine / langage offensant / discussions religieuses - politiques.\n```");
+	ruleEmbed.addField("\u200B", "```css\n4 - Pas de spam.\n```");
+	ruleEmbed.addField("\u200B", "```css\n5 - Pas de publicité sans permission.\n```");
+
+	// discordUtils.getMessageById(bot, '852099574050979870', '859808840358559754').then(message => 
+	// 	{
+	// 		message.edit(ruleEmbed);
+	// 	});
 });
 
 let checkInvalidRoles = function(bot)

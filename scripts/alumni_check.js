@@ -136,6 +136,12 @@ module.exports = {
 		let dataGuild = data[guildMember.guild.id];
 
 		let user = module.exports.getUserByName(guildMember.guild.id, name);
+
+		if(user.check == check_registered)
+		{
+			return false;
+		}
+
 		guildMember.roles.remove(dataGuild.invalidRole);
 		guildMember.roles.add(dataGuild.validRole);
 
@@ -146,6 +152,8 @@ module.exports = {
 		}
 
 		module.exports.registerUser(data, guildMember, user);
+
+		return true;
 	},
 
 	removeMember : async function(data, guildMember, changeGuildSettings = false)
@@ -182,16 +190,16 @@ module.exports = {
 		createAndSendSheetInformations(data, guildMember, user.pseudoCell, pseudo);
 		createAndSendSheetInformations(data, guildMember, user.idCell, id);
 
-		user.check = check_registered;
-		user.pseudo = pseudo;
-		user.id = id;
+		google.sheetData[guildMember.guild.id][user.index].check = check_registered;
+		google.sheetData[guildMember.guild.id][user.index].pseudo = pseudo;
+		google.sheetData[guildMember.guild.id][user.index].id = id;
 	},
 
 	unregisterUser : function(data, guildMember, user)
 	{
 		createAndSendSheetInformations(data, guildMember, user.checkCell, check_no_registered);
 
-		user.check = check_no_registered;
+		google.sheetData[guildMember.guild.id][user.index].check = check_no_registered;
 	}
 }
 
