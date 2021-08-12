@@ -6,6 +6,7 @@ const discordUtils = require('./scripts/discordUtils.js');
 const logMessage = require('./scripts/log.js').logMessage;
 const alumni = require('./scripts/alumni_check.js');
 const { parse } = require('path');
+const { reactMessage } = require('./scripts/discordUtils.js');
 
 const directoryPath = path.join(__dirname, 'data');
 
@@ -83,6 +84,18 @@ bot.on('ready', function () {
 
 					case 'valid':
 						setRole(data, message, commands, isAdmin, "validRole");
+						break;
+
+					case 'game':
+						setRole(data, message, commands, isAdmin, "gameRole");
+						break;
+
+					case 'animation':
+						setRole(data, message, commands, isAdmin, "animationRole");
+						break;
+
+					case 'design':
+						setRole(data, message, commands, isAdmin, "designRole");
 						break;
 
 					case 'link':
@@ -246,6 +259,29 @@ bot.on('ready', function () {
 							discordUtils.reactRightMessage(message);
 							break;
 
+					case 'fusion':
+						if( !isBotManager )
+						{
+							wrongRight(message);
+							break;
+						}
+
+						if(commands.length < 6)
+						{
+							discordUtils.reactWrongMessage(message, "use '!alu fusion <sheet_link> <page_name_from> <page_name_to> <range>'");
+							message.channel.send("Ex : !alu fusion 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms ClassData ClassData2 A2:E");
+							break;
+						}
+
+						let link = commands[2];
+						let from = commands[3];
+						let to = commands[4];
+						let range = commands[5];
+
+						alumni.fusionSheet(link, from, to, range);
+						discordUtils.reactRightMessage(message);
+						break;
+
 					case 'embed':
 						if( !isBotManager )
 						{
@@ -357,6 +393,9 @@ let initGuild = function(guild, data)
 	initValue(serverId, data, "botManagerRole", -1);
 	initValue(serverId, data, "invalidRole", -1);
 	initValue(serverId, data, "validRole", -1);
+	initValue(serverId, data, "gameRole", -1);
+	initValue(serverId, data, "animationRole", -1);
+	initValue(serverId, data, "designRole", -1);
 	initValue(serverId, data, "link", "");
 	initValue(serverId, data, "page", "");
 	initValue(serverId, data, "range", "");

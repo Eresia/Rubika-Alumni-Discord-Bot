@@ -66,6 +66,32 @@ function getNewToken(oAuth2Client, info, callback) {
 	});
 }
 
+function getColumnData(info, values)
+{
+	let data = {};
+
+	for(let element in info.data)
+	{
+		data[element] = -1;
+	}
+
+	for(let i = 0; i < values[0].length; i++)
+	{
+		let keys = Object.keys(info.data);
+
+		for(let j = 0; j < keys.length; j++)
+		{
+			if(info.data[keys[j]] == values[0][i])
+			{
+				data[keys[j]] = i;
+				break;
+			}
+		}
+	}
+
+	return data;
+}
+
 function getSheetInformations(auth, info) {
 	const sheets = google.sheets({version: 'v4', auth});
 	
@@ -79,75 +105,20 @@ function getSheetInformations(auth, info) {
 		if (err)
 		{
 			return console.log('The API returned an error: ' + err);
-		} 
-	
-		let firstName = -1;
-		let lastName = -1;
-		let check = -1;
-		let pseudo = -1;
-		let id = -1;
-		let checkSheetLetter;
-		let pseudoSheetLetter;
-		let idSheetLetter;
+		}
 
+		let data = getColumnData(info, res.data.values);
 		let firstCell = info.range.split(':')[0];
 		let sheetFirstNumber = parseInt(firstCell.substring(1));
 
-		for(let i = 0; i < res.data.values[0].length; i++)
+		let dataKeys = Object.keys(data);
+
+		for(let i = 0; i < dataKeys.length; i++)
 		{
-			switch(res.data.values[0][i])
+			if(data[dataKeys[i]] == -1)
 			{
-				case info.firstName:
-					firstName = i;
-					break;
-
-				case info.lastName:
-					lastName = i;
-					break;
-
-				case info.checkName:
-					check = i;
-
-					checkSheetLetter = String.fromCharCode(firstCell.charCodeAt(0) + i);
-					break;
-
-				case info.pseudoName:
-					pseudo = i;
-
-					pseudoSheetLetter = String.fromCharCode(firstCell.charCodeAt(0) + i);
-					break;
-
-				case info.idName:
-					id = i;
-
-					idSheetLetter = String.fromCharCode(firstCell.charCodeAt(0) + i);
-					break;
+				return console.log("No " + dataKeys[i] + " Name");
 			}
-		}
-
-		if(firstName == -1)
-		{
-			return console.log("No First Name");
-		}
-
-		if(lastName == -1)
-		{
-			return console.log("No Last Name");
-		}
-
-		if(check == -1)
-		{
-			return console.log("No Check Name");
-		}
-
-		if(pseudo == -1)
-		{
-			return console.log("No Pseudo Name");
-		}
-
-		if(id == -1)
-		{
-			return console.log("No Id Name");
 		}
 
 		module.exports.sheetData[info.serverId] = [];
@@ -156,14 +127,18 @@ function getSheetInformations(auth, info) {
 		{
 			let user = {};
 			user.index = i - 1;
-			user.firstName = res.data.values[i][firstName];
-			user.lastName = res.data.values[i][lastName];
-			user.check = res.data.values[i][check];
-			user.pseudo = res.data.values[i][pseudo];
-			user.id = res.data.values[i][id];
-			user.checkCell = checkSheetLetter + (sheetFirstNumber + i);
-			user.pseudoCell = pseudoSheetLetter + (sheetFirstNumber + i);
-			user.idCell = idSheetLetter + (sheetFirstNumber + i);
+			user.cells = {};
+
+			for(let j = 0; j < dataKeys.length; j++)
+			{
+				let key = dataKeys[j];
+				user[key] = res.data.values[i][data[key]];
+
+				if((key != "lastName") && (key != "firstName"))
+				{
+					user.cells[key] = String.fromCharCode(firstCell.charCodeAt(0) + data[key]) + (sheetFirstNumber + i);
+				}
+			}
 
 			module.exports.sheetData[info.serverId].push(user);
 		}
@@ -200,6 +175,121 @@ function clearSheetInformations(auth, info) {
 	});
 }
 
+function fusionSheetInformations(auth, info)
+{
+	const sheets = google.sheets({version: 'v4', auth});
+	
+	sheets.spreadsheets.values.get({
+		spreadsheetId: info.link,
+		range: (info.from + '!' + info.range),
+	}, (err, res) => {
+
+		if (err)
+		{
+			return console.log('The API returned an error: ' + err);
+		} 
+	
+		let result = [];
+		let data = getColumnData(info, res.data.values);
+
+		result.push([]);
+
+		for(let i = 0; i < res.data.values[0].length; i++)
+		{
+			result[0].push(res.data.values[0][i]);
+		}
+
+		for(let i = 1; i < res.data.values.length; i++)
+		{
+			let found = false;
+
+			for(let j = 0; j < result.length; j++)
+			{
+				if(result[j][data.firstName] != res.data.values[i][data.firstName])
+				{
+					continue;
+				}
+
+				if(result[j][data.lastName] != res.data.values[i][data.lastName])
+				{
+					continue;
+				}
+
+				found = true;
+
+				let dataKeys = Object.keys(data);
+
+				for(let k = 0; k < dataKeys.length; k++)
+				{
+					if(result[j][data[dataKeys[k]]] != res.data.values[i][data[dataKeys[k]]])
+					{
+						let index = data[dataKeys[k]];
+						if((result[j].length > data[index]) && (res.data.values[i].length > data[index]))
+						{
+							if((result[j][data[index]].length != 0) && (res.data.values[i][data[index]].length != 0))
+							{
+								found = false;
+								break;
+							}
+						}
+						
+					}
+				}
+
+				if(found)
+				{
+					for(let k = 0; k < res.data.values[i].length; k++)
+					{
+						if(res.data.values[i][k].length != 0)
+						{
+							if(k == data.promotion)
+							{
+								result[j][k] = parseInt(res.data.values[i][k]);
+							}
+							else
+							{
+								result[j][k] = res.data.values[i][k];
+							}
+						}
+					}
+				}
+			}
+
+			if(found)
+			{
+				continue;
+			}
+
+			let newLine = []
+			for(let j = 0; j < res.data.values[i].length; j++)
+			{
+				if(j == data.promotion)
+				{
+					newLine.push(parseInt(res.data.values[i][j]));
+				}
+				else
+				{
+					newLine.push(res.data.values[i][j]);
+				}
+			}
+
+			result.push(newLine);
+		}
+
+		sheets.spreadsheets.values.update({
+			spreadsheetId: info.link,
+			range: (info.to + '!' + info.range),
+			valueInputOption: 'RAW',
+			resource: {"values" : result}
+		}, (err, res) => {
+	
+			if (err) {
+				return console.log('The API returned an error: ' + err);
+			}
+		});
+	});
+}
+
 module.exports = {
 	sheetData : {},
 	updateSheetData : function(info)
@@ -209,6 +299,16 @@ module.exports = {
 			if (err) return console.log('Error loading client secret file:', err);
 			// Authorize a client with credentials, then call the Google Sheets API.
 			authorize(JSON.parse(content), info, getSheetInformations);
+		});
+	},
+
+	fusionSheetData : function(info)
+	{
+		// Load client secrets from a local file.
+		fs.readFile('credentials.json', (err, content) => {
+			if (err) return console.log('Error loading client secret file:', err);
+			// Authorize a client with credentials, then call the Google Sheets API.
+			authorize(JSON.parse(content), info, fusionSheetInformations);
 		});
 	},
 
