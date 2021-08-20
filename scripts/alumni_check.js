@@ -72,7 +72,7 @@ module.exports = {
 
 	getUserByName : function(serverId, name)
 	{
-		let lowerName = name.toLowerCase();
+		let lowerName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
 		if(!(serverId in google.sheetData) || (google.sheetData[serverId] == null))
 		{
@@ -82,8 +82,8 @@ module.exports = {
 
 		for(let i = 0; i < google.sheetData[serverId].length; i++)
 		{
-			let lowerSheetName1 = google.sheetData[serverId][i].firstName.toLowerCase();
-			let lowerSheetName2 = google.sheetData[serverId][i].lastName.toLowerCase();
+			let lowerSheetName1 = google.sheetData[serverId][i].firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+			let lowerSheetName2 = google.sheetData[serverId][i].lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
 			if((lowerName == (lowerSheetName1 + " " + lowerSheetName2)) || (lowerName == (lowerSheetName2 + " " + lowerSheetName1)))
 			{

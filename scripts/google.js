@@ -205,12 +205,12 @@ function fusionSheetInformations(auth, info)
 
 			for(let j = 0; j < result.length; j++)
 			{
-				if(result[j][data.firstName] != res.data.values[i][data.firstName])
+				if(result[j][data.firstName].normalize('NFD').replace(/[\u0300-\u036f]/g, "") != res.data.values[i][data.firstName].normalize('NFD').replace(/[\u0300-\u036f]/g, ""))
 				{
 					continue;
 				}
 
-				if(result[j][data.lastName] != res.data.values[i][data.lastName])
+				if(result[j][data.lastName].normalize('NFD').replace(/[\u0300-\u036f]/g, "") != res.data.values[i][data.lastName].normalize('NFD').replace(/[\u0300-\u036f]/g, ""))
 				{
 					continue;
 				}

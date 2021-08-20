@@ -5,6 +5,7 @@ const bot = new Discord.Client();
 const discordUtils = require('./scripts/discordUtils.js');
 const logMessage = require('./scripts/log.js').logMessage;
 const alumni = require('./scripts/alumni_check.js');
+const admin_text = require('./scripts/admin_text.js');
 const { parse } = require('path');
 const { reactMessage } = require('./scripts/discordUtils.js');
 
@@ -325,19 +326,7 @@ bot.on('ready', function () {
 		alumni.removeMember(data, guildMember, false);
 	});
 
-	let ruleEmbed = new Discord.MessageEmbed();
-	ruleEmbed.setTitle("Règles du serveur");
-
-	ruleEmbed.addField("\u200B", "```css\n1 - Prénom / Nom en pseudo.\n```");
-	ruleEmbed.addField("\u200B", "```css\n2 - Pas de contenu NSFW / illégal (message/vocal/pseudo/photo de profil).\n```");
-	ruleEmbed.addField("\u200B", "```css\n3 - Aucune attaque personnelle / harcèlement / sexisme / racisme / discours de haine / langage offensant / discussions religieuses - politiques.\n```");
-	ruleEmbed.addField("\u200B", "```css\n4 - Pas de spam.\n```");
-	ruleEmbed.addField("\u200B", "```css\n5 - Pas de publicité sans permission.\n```");
-
-	// discordUtils.getMessageById(bot, '852099574050979870', '859808840358559754').then(message => 
-	// 	{
-	// 		message.edit(ruleEmbed);
-	// 	});
+	admin_text.displayDiscordMessages(bot);
 });
 
 let checkInvalidRoles = function(bot)
