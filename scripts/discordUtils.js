@@ -170,6 +170,26 @@ module.exports = {
 		return channel;
 	},
 
+	getChannelStringById : function(id)
+	{
+		return "<#" + id + ">";
+	},
+
+	getChannelIdByString : function(string)
+	{
+
+		let result = -1;
+
+		if(string.substring(0, 2) == "<#")
+		{
+			if(string[string.length - 1] == ">")
+			{
+				result = string.substring(2, string.length - 1);
+			}
+		}
+		return result;
+	},
+
 	getMessageById : function(bot, channelId, messageId)
 	{
 		let result = null;

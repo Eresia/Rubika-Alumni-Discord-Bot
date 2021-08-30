@@ -11,14 +11,25 @@ module.exports = {
 
 let writeMessages = function(bot, )
 {
-    discordUtils.logMessage(bot, '852099574050979870', ruleMessage());
-    discordUtils.logMessage(bot, '852099574050979870', roleMessage(bot));
+    // discordUtils.logMessage(bot, '855102070633398282', welcomeMessage());
+    // discordUtils.logMessage(bot, '852099574050979870', ruleMessage());
+    // discordUtils.logMessage(bot, '852099574050979870', roleMessage(bot));
 }
 
 let editMessages = function(bot)
 {
-    discordUtils.getMessageById(bot, '852099574050979870', '859808840358559754').then(message => message.edit(ruleMessage()));
-    discordUtils.getMessageById(bot, '852099574050979870', '878187153253883954').then(message => message.edit(roleMessage(bot)));
+    discordUtils.getMessageById(bot, '855102070633398282', '878215162144911381').then(message => message.edit(welcomeMessage()));
+    //discordUtils.getMessageById(bot, '852099574050979870', '859808840358559754').then(message => message.edit(ruleMessage()));
+    //discordUtils.getMessageById(bot, '852099574050979870', '878187153253883954').then(message => message.edit(roleMessage(bot)));
+}
+
+let welcomeMessage = function(bot)
+{
+    let embed = new Discord.MessageEmbed();
+    embed.setTitle("Bienvenue sur Rubika Alumni !");
+    embed.setDescription("Vérifiez vos messages privés pour vous identifier.\n\nSi votre nom n'est pas disponible ou que vous souhaitez utiliser un autre prénom ou un pseudo sur le serveur merci de contacter un admin.");
+    
+    return embed;
 }
 
 let ruleMessage = function()

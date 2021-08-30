@@ -176,7 +176,7 @@ bot.on('ready', function () {
 						let newMember = discordUtils.getUserById(message.guild, discordUtils.getUserIdByString(commands[2]));
 						if(newMember == null)
 						{
-							discordUtils.reactWrongMessage("Member " + commands[2] + " don't exist");
+							discordUtils.reactWrongMessage(message, "Member " + commands[2] + " don't exist");
 							break;
 						}
 
