@@ -174,14 +174,24 @@ bot.on('ready', function () {
 							break;
 						}
 
-						if(commands.length < 3)
+						if(commands.length < 4)
 						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city city_name'");
-							message.channel.send("Ex : !alu new Neuville Sur Oise");
+							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji city_name'");
+							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Neuville Sur Oise");
 							break;
 						}
 
-						let city = message.content.substring(commands[0].length + commands[1].length + 2);
+						let emoji = commands[2];
+						const regexEmoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/gi;
+						if(!regexEmoji.test(emoji) && ((emoji.charAt(0) != ':' ) || (emoji.charAt(emoji.length - 1) != ':' )))
+						{
+							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji city_name'");
+							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Neuville Sur Oise");
+							break;
+						}
+
+						let city = message.content.substring(commands[0].length + commands[1].length + commands[2].length + 3);
+
 						let textPosition = discordUtils.getRoleById(message.guild, data[serverId].gameRole).position;
 
 						message.guild.roles.create({
@@ -282,7 +292,26 @@ bot.on('ready', function () {
 									rateLimitPerUser: 120
 								});
 
-								message.reply("Catégorie et chans créés avec succès pour la ville " + city);
+								let channelId = '852099541079556096';
+								let messageId = '875426135511547974';
+
+								discordUtils.getMessageById(bot, channelId, messageId).then(eventMessage => 
+								{
+									let baseEmbed = eventMessage.embeds[0];
+		
+									let title = baseEmbed.title;
+									let description = baseEmbed.description.replace(/\n/g, "\\n") + "\\n" + emoji + " - " + city.toUpperCase();
+									let constructMessage = ( "\u200B\n**==Ces deux commandes sont à copier coller==**\n\nCommande 1 : \n```"
+										+ "z/edit " + messageId + " {\n\"color\": 0,\n\"title\": \"" 
+										+ title + "\",\n\"description\": \"" + description + "\"\n}"
+										+ "```\nCommande 2 : \n```"
+										+ "z/normal " + emoji + " " + discordUtils.getRoleStringById(newRole.id)
+										+ "```" );
+
+									message.channel.send(constructMessage);
+								});
+
+								message.channel.send("Catégorie et chans créés avec succès pour la ville " + city);
 							});
 						});
 						break;
