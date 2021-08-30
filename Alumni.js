@@ -99,6 +99,14 @@ bot.on('ready', function () {
 						setRole(data, message, commands, isAdmin, "designRole");
 						break;
 
+					case 'ambassador':
+						setRole(data, message, commands, isAdmin, "ambassadorRole");
+						break;
+
+					case 'bot-event':
+						setRole(data, message, commands, isAdmin, "botEventRole");
+						break;
+
 					case 'link':
 						if(!isBotManager)
 						{
@@ -157,6 +165,126 @@ bot.on('ready', function () {
 								discordUtils.reactRightMessage(message, "Name \"" + user.firstName + " " + user.lastName + "\" exists in database and is registered");
 							}
 						}
+						break;
+
+					case 'new_city':
+						if(!isBotManager)
+						{
+							wrongRight(message);
+							break;
+						}
+
+						if(commands.length < 3)
+						{
+							discordUtils.reactWrongMessage(message, "use '!alu new_city city_name'");
+							message.channel.send("Ex : !alu new Neuville Sur Oise");
+							break;
+						}
+
+						let city = message.content.substring(commands[0].length + commands[1].length + 2);
+						let textPosition = discordUtils.getRoleById(message.guild, data[serverId].gameRole).position;
+
+						message.guild.roles.create({
+							reason: 'Add Role for city ' + city,
+							data:
+							{
+								name: city,
+								position: discordUtils.getRoleById(message.guild, data[serverId].gameRole).position + 1,
+								mentionable: false,
+								hoist: true
+							}
+						}).then(newRole =>{
+							discordUtils.reactRightMessage(message, "Création du rôle " + discordUtils.getRoleStringById(newRole.id) + " avec succès");
+							message.guild.channels.create(city, 
+							{
+								type: 'category',
+								reason: 'Create Category for city ' + city,
+								permissionOverwrites: 
+								[
+									{
+										id: message.guild.id,
+										deny: 
+										[
+											Discord.Permissions.FLAGS.VIEW_CHANNEL, 
+											Discord.Permissions.FLAGS.SEND_MESSAGES
+										]
+									},
+									{
+										id: newRole.id,
+										allow: 
+										[
+											Discord.Permissions.FLAGS.VIEW_CHANNEL, 
+											Discord.Permissions.FLAGS.SEND_MESSAGES
+										]
+									}
+								]
+							}).then(newCategory => {
+								message.guild.channels.create("🎉events-" + city, 
+								{
+									type: 'text',
+									reason: 'Create event channel for city ' + city,
+									parent: newCategory,
+									permissionOverwrites:
+									[
+										{
+											id: message.guild.id,
+											deny: 
+											[
+												Discord.Permissions.FLAGS.VIEW_CHANNEL, 
+												Discord.Permissions.FLAGS.SEND_MESSAGES
+											]
+										},
+										{
+											id: newRole.id,
+											allow: 
+											[
+												Discord.Permissions.FLAGS.VIEW_CHANNEL
+											]
+										},
+										{
+											id: data[serverId].ambassadorRole,
+											allow: 
+											[
+												Discord.Permissions.FLAGS.VIEW_CHANNEL,
+												Discord.Permissions.FLAGS.SEND_MESSAGES
+											]
+										},
+										{
+											id: data[serverId].botEventRole,
+											allow: 
+											[
+												Discord.Permissions.FLAGS.VIEW_CHANNEL,
+												Discord.Permissions.FLAGS.SEND_MESSAGES
+											]
+										}
+									]
+								});
+
+								message.guild.channels.create("💬general-" + city, 
+								{
+									type: 'text',
+									reason: 'Create general channel for city ' + city,
+									parent: newCategory
+								});
+
+								message.guild.channels.create("💼serious-" + city, 
+								{
+									type: 'text',
+									reason: 'Create serious channel for city ' + city,
+									parent: newCategory
+								});
+
+								message.guild.channels.create("💡idées-" + city, 
+								{
+									type: 'text',
+									reason: 'Create idées channel for city ' + city,
+									parent: newCategory,
+									rateLimitPerUser: 120
+								});
+
+								message.reply("Catégorie et chans créés avec succès pour la ville " + city);
+							});
+						});
 						break;
 
 					case 'new':
@@ -385,6 +513,8 @@ let initGuild = function(guild, data)
 	initValue(serverId, data, "gameRole", -1);
 	initValue(serverId, data, "animationRole", -1);
 	initValue(serverId, data, "designRole", -1);
+	initValue(serverId, data, "ambassadorRole", -1);
+	initValue(serverId, data, "botEventRole", -1);
 	initValue(serverId, data, "link", "");
 	initValue(serverId, data, "page", "");
 	initValue(serverId, data, "range", "");
