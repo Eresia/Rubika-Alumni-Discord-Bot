@@ -157,7 +157,7 @@ module.exports = {
 				if(user.check == check_registered)
 				{
 					dmChannel.send(alreadyRegisteredMessage);
-					console.log(message.author.tag + " try to use already registered name " + user.firstName + " " + user.lastName);
+					console.log(message.author.tag + " try to use already registered name " + upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
 					return false;
 				}
 
@@ -169,7 +169,7 @@ module.exports = {
 					let user = module.exports.getUserByName(guildMember.guild.id, collected.first().content);
 
 					let name = collected.first().content;
-					discordUtils.reactRightMessage(collected.first(), birthdayMessage.replace("$$$", user.firstName));
+					discordUtils.reactRightMessage(collected.first(), birthdayMessage.replace("$$$", upperCaseFirstLetter(user.firstName)));
 
 					filter = function(message)
 					{
@@ -363,7 +363,7 @@ module.exports = {
 		}		
 
 		try {
-			await guildMember.setNickname(user.firstName + " " + user.lastName);
+			await guildMember.setNickname(upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
 		} catch(err) {
 			console.log("Can't change nickname of " + guildMember.user.tag);
 		}
@@ -450,4 +450,8 @@ let createAndSendSheetClear = function(data, guildMember, range)
 
 	info.range = range;
 	google.clearSheetRange(info);
+}
+
+let upperCaseFirstLetter = function(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }

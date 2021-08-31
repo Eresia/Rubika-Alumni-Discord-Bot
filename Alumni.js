@@ -255,7 +255,6 @@ bot.on('ready', function () {
 											id: data[serverId].ambassadorRole,
 											allow: 
 											[
-												Discord.Permissions.FLAGS.VIEW_CHANNEL,
 												Discord.Permissions.FLAGS.SEND_MESSAGES
 											]
 										},
