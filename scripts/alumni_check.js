@@ -1,14 +1,77 @@
 const discordUtils = require('./discordUtils.js');
 const google = require('./google.js');
 
-const askMessage = "Bonjour. Pouvez vous m'écrire un message de la forme \"Prénom Nom\" pour que je puisse vous enregistrer dans le serveur Rubika Alumni ?";
-const birthdayMessage = "Enchanté $$$. Je vais avoir besoin de quelques informations pour confirmer votre identité. Pouvez vous m'indiquer votre date de naissance sous la forme \"JJ/MM/AAAA\" ? (Ex : 31/01/1970)";
-const promotionMessage = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle promotion êtes vous suivi de votre année de sortie de l'école ?\n\nPour rappel :\n- SIG => GAME\n- SIC => COM / ANIM\n- ISD => Institut Supérieur du Design\n\nEx : \"SIG 2019\"";
-const confirmMessage = "**Vous avez bien été enregistré dans le serveur !**\n\nLes channels les plus importants :\n <#852099541079556096> :  pour rejoindre une ou plusieurs villes et participer à ses événements\n <#875411952313188373> : les annonces qui concernent tout le monde\n <#875411975256018954> : pour proposer de nouvelles villes\n <#881949055150866494> : pour toutes les suggestions et améliorations\n\nBonne journée et bienvenue !";
-const notFoundMessage = "Je suis désolé, mais je n'arrive pas à trouver le nom $$$ dans la base de donnée. Pouvez vous vérifier qu'il n'y avait pas d'erreur de frappe (attention aux accents !) et réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
-const badBirthdayMessage = "Je suis désolé mais cela ne correspond pas. Pouvez vous réessayer (attention à bien faire jour/mois/année) ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
-const badInformationsMessage = "Je suis désolé, mais les informations ne correspondent pas. Pouvez vous réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
-const alreadyRegisteredMessage = "Je suis désolé, mais le nom que vous avez saisi est déjà enregistré pour le serveur. Si c'est bien le votre, merci de contacter les administrateurs pour qu'ils puissent vérifier le problème avec vous.";
+const chooseLanguageFrench = "Pouvez vous sélectionner le drapeau correspondant à la langue que vous souhaitez utiliser ?";
+
+const chooseLanguageEnglish = "Can you click on the flag of the language you want to use ?";
+
+
+const askMessageFrench = "\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n" 
+	+ "\u200B\n" 
+	+ ":flag_fr: **Version Française sélectionnée :**\n\n" 
+	+ "Bonjour ! Pouvez vous m'écrire un message de la forme \"Prénom Nom\" pour que je puisse vous enregistrer dans le serveur Rubika Alumni ?";
+
+const askMessageEnglish = "\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n" 
+	+ "\u200B\n" 
+	+ ":flag_gb: **English version selected :**\n\n" 
+	+ "Hello ! Can you write a message in the form \"First_Name Last_Name\" to be registered in Rubika Alumni server ?";
+
+
+const birthdayMessageFrench = "Enchanté $$$. Je vais avoir besoin de quelques informations pour confirmer votre identité. Pouvez vous m'indiquer votre date de naissance sous la forme \"JJ/MM/AAAA\" ? (Ex : 31/01/1970)";
+
+const birthdayMessageEnglish = "Nice to meet you $$$. I will need some informations to confirm your identity. Can you give me your date of birth in the form \"DD/MM/YYYY\" (french form) ? (Ex : 31/01/1970)";
+
+const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle promotion êtes vous suivi de votre année de sortie de l'école ?\n\n" 
+	+ "Pour rappel :\n" 
+	+ "- SIG => GAME\n" 
+	+ "- SIC => COM / ANIM\n" 
+	+ "- ISD => Institut Supérieur du Design\n\n" 
+	+ "Ex : \"SIG 2019\"";
+
+const promotionMessageEnglish = "Thank you. Last question, can you give me your cursus and the year of your graduation ?\n\n" 
+	+ "As a reminder:\n" 
+	+ "- SIG => GAME\n" 
+	+ "- SIC => COM / ANIM\n" 
+	+ "- ISD => Design\n\n" 
+	+ "Ex : \"SIG 2019\"";
+
+
+const confirmMessageFrench = "**Vous avez bien été enregistré dans le serveur !**\n\n" 
+	+ "Les channels les plus importants :\n" 
+	+ "<#852099541079556096> :  pour rejoindre une ou plusieurs villes et participer à ses événements\n" 
+	+ "<#875411952313188373> : les annonces qui concernent tout le monde\n" 
+	+ "<#875411975256018954> : pour proposer de nouvelles villes\n" 
+	+ "<#881949055150866494> : pour toutes les suggestions et améliorations\n\n" 
+	+ "Bonne journée et bienvenue !";
+
+const confirmMessageEnglish = "**You are successfully register !**\n\n" 
+	+ "More important channels:\n" 
+	+ "<#852099541079556096>: to join one or many city et participate to events\n" 
+	+ "<#875411952313188373>: to follow the general announcement for everyone\n" 
+	+ "<#875411975256018954>: to ask for new city\n" 
+	+ "<#881949055150866494>: for all suggestions and ameliorations\n\n" 
+	+ "Good Day and Welcome !";
+
+
+const notFoundMessageFrench = "Je suis désolé, mais je n'arrive pas à trouver le nom $$$ dans la base de donnée. Pouvez vous vérifier qu'il n'y avait pas d'erreur de frappe et réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
+
+const notFoundMessageEnglish = "I'm sorry but I can't find the name $$$ in the databse. Can you verify the are no typing error and try again ? If the problem persist, please contact a moderator to have help.";
+
+
+const badBirthdayMessageFrench = "Je suis désolé mais cela ne correspond pas. Pouvez vous réessayer (attention à bien faire jour/mois/année) ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
+
+const badBirthdayMessageEnglish = "I'm sorry but it does not work. Can you try again (be carreful to type Day/Month/Year) ? If the problem persist, please contact a moderator to have help.";
+
+
+const badInformationsMessageFrench = "Je suis désolé, mais les informations ne correspondent pas. Pouvez vous réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
+
+const badInformationsMessageEnglish = "I'm sorry but it does not work. Can you try again ? If the problem persist, please contact a moderator to have help.";
+
+
+const alreadyRegisteredMessageFrench = "Je suis désolé, mais le nom que vous avez saisi est déjà enregistré pour le serveur. Si c'est bien le votre, merci de contacter un modérateur pour qu'ils puissent vérifier le problème avec vous.";
+
+const alreadyRegisteredMessageEnglish = "I'm sorry but the name is already registered on the server. If it is really yours, please contact a moderator who will can check with you.";
+
 
 const check_no_registered = "Non";
 const check_registered = "Oui";
@@ -133,96 +196,48 @@ module.exports = {
 		}
 
 		guildMember.createDM().then(dmChannel =>
+		{
+			if(!firstMessage)
 			{
-
-			if(firstMessage)
-			{
-				dmChannel.send(askMessage);
+				dmChannel.awaitMessages(m => true, {max: 1}).then(m => {this.askNewMember(data, guildMember, true)});
+				return;
 			}
 
-			let filter = function(message)
+			dmChannel.send(createBilingueMessage(chooseLanguageFrench, chooseLanguageEnglish)).then(languageMessage =>
 			{
-				if(message.author.bot)
+				languageMessage.react('🇫🇷');
+				languageMessage.react('🇬🇧');
+
+				let filter = function(reaction, user)
 				{
-					return false;
+					return !user.bot && (reaction.emoji.name === '🇫🇷' || reaction.emoji.name === '🇬🇧');
 				}
 
-				let user = module.exports.getUserByName(guildMember.guild.id, message.content);
-				if(user == null)
+				languageMessage.awaitReactions(filter, {max : 1}).then(async function(collected)
 				{
-					dmChannel.send(notFoundMessage.replace("$$$", message.content));
-					return false;
-				}
+					let isFrench = collected.first().emoji.name === '🇫🇷';
 
-				if(user.check == check_registered)
-				{
-					dmChannel.send(alreadyRegisteredMessage);
-					console.log(message.author.tag + " try to use already registered name " + upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
-					return false;
-				}
+					dmChannel.send(createLanguageMessage(askMessageFrench, askMessageEnglish, isFrench));
 
-				return true;
-			}
-
-			dmChannel.awaitMessages(filter, {max: 1}).then(async function(collected)
-				{
-					let user = module.exports.getUserByName(guildMember.guild.id, collected.first().content);
-
-					let name = collected.first().content;
-					discordUtils.reactRightMessage(collected.first(), birthdayMessage.replace("$$$", upperCaseFirstLetter(user.firstName)));
-
-					filter = function(message)
+					let filter = function(message)
 					{
 						if(message.author.bot)
 						{
 							return false;
 						}
 
-						if(user.birthday.length > 0)
+						let user = module.exports.getUserByName(guildMember.guild.id, message.content);
+						if(user == null)
 						{
-							if(user.birthday != message.content)
-							{
-								dmChannel.send(badBirthdayMessage);
-								return false;
-							}
+							dmChannel.send(createLanguageMessage(notFoundMessageFrench.replace("$$$", message.content), notFoundMessageEnglish.replace("$$$", message.content), isFrench));
+							return false;
 						}
-						else
+
+						if(user.check == check_registered)
 						{
-							let parts = message.content.split('/');
-
-							if(parts.length != 3)
-							{
-								dmChannel.send(badBirthdayMessage);
-								return false;
-							}
-
-							for(let i = 0; i < 3; i++)
-							{
-								parts[i] = parseInt(parts[i]);
-								if(isNaN(parts[i]))
-								{
-									dmChannel.send(badBirthdayMessage);
-									return false;
-								}
-							}
-
-							if(parts[0] < 1 || parts[0] > 31)
-							{
-								dmChannel.send(badBirthdayMessage);
-								return false;
-							}
-
-							if(parts[1] < 1 || parts[1] > 12)
-							{
-								dmChannel.send(badBirthdayMessage);
-								return false;
-							}
-
-							if(parts[2] < 1950 || parts[2] > (new Date()).getFullYear() - 15)
-							{
-								dmChannel.send(badBirthdayMessage);
-								return false;
-							}
+							dmChannel.send(createLanguageMessage(alreadyRegisteredMessageFrench, alreadyRegisteredMessageEnglish), isFrench);
+							console.log(message.author.tag + " try to use already registered name " + upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
+							return false;
 						}
 
 						return true;
@@ -230,8 +245,10 @@ module.exports = {
 
 					dmChannel.awaitMessages(filter, {max: 1}).then(async function(collected)
 					{
-						let birthday = collected.first().content;
-						discordUtils.reactRightMessage(collected.first(), promotionMessage);
+						let user = module.exports.getUserByName(guildMember.guild.id, collected.first().content);
+
+						let name = collected.first().content;
+						discordUtils.reactRightMessage(collected.first(), createLanguageMessage(birthdayMessageFrench.replace("$$$", upperCaseFirstLetter(user.firstName)), birthdayMessageEnglish.replace("$$$", upperCaseFirstLetter(user.firstName)), isFrench));
 
 						filter = function(message)
 						{
@@ -240,57 +257,49 @@ module.exports = {
 								return false;
 							}
 
-							let parts = message.content.split(' ');
-
-							if(parts.length != 2)
+							if(user.birthday.length > 0)
 							{
-								dmChannel.send(badInformationsMessage);
-								return false;
-							}
-
-							if((typeof user.formation !== 'undefined') && user.formation.length > 0)
-							{
-								if(user.formation != parts[0].toUpperCase())
+								if(user.birthday != message.content)
 								{
-									dmChannel.send(badInformationsMessage);
+									dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
 									return false;
 								}
 							}
 							else
 							{
-								switch(parts[0].toUpperCase())
-								{
-									case "SIG":
-									case "SIC":
-									case "ISD":
-										break;
+								let parts = message.content.split('/');
 
-									default:
-										dmChannel.send(badInformationsMessage);
+								if(parts.length != 3)
+								{
+									dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
+									return false;
+								}
+
+								for(let i = 0; i < 3; i++)
+								{
+									parts[i] = parseInt(parts[i]);
+									if(isNaN(parts[i]))
+									{
+										dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
 										return false;
+									}
 								}
-							}
 
-							if((typeof user.formation !== 'undefined') && user.promotion.length > 0)
-							{
-								if(user.promotion != parts[1])
+								if(parts[0] < 1 || parts[0] > 31)
 								{
-									dmChannel.send(badInformationsMessage);
-									return false;
-								}
-							}
-							else
-							{
-								let value = parseInt(parts[1]);
-								if(isNaN(value))
-								{
-									dmChannel.send(badInformationsMessage);
+									dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
 									return false;
 								}
 
-								if(value < 1985 || value > (new Date()).getFullYear() + 6)
+								if(parts[1] < 1 || parts[1] > 12)
 								{
-									dmChannel.send(badBirthdayMessage);
+									dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
+									return false;
+								}
+
+								if(parts[2] < 1950 || parts[2] > (new Date()).getFullYear() - 15)
+								{
+									dmChannel.send(createLanguageMessage(badBirthdayMessageFrench, badBirthdayMessageEnglish, isFrench));
 									return false;
 								}
 							}
@@ -300,19 +309,90 @@ module.exports = {
 
 						dmChannel.awaitMessages(filter, {max: 1}).then(async function(collected)
 						{
-							let parts = collected.first().content.split(" ");
-							discordUtils.reactRightMessage(collected.first(), confirmMessage);
+							let birthday = collected.first().content;
+							discordUtils.reactRightMessage(collected.first(), createLanguageMessage(promotionMessageFrench, promotionMessageEnglish, isFrench));
 
-							await module.exports.applyNewMember(data, guildMember, name, birthday, parts[0].toUpperCase(), parts[1]);
+							filter = function(message)
+							{
+								if(message.author.bot)
+								{
+									return false;
+								}
+
+								let parts = message.content.split(' ');
+
+								if(parts.length != 2)
+								{
+									dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+									return false;
+								}
+
+								if((typeof user.formation !== 'undefined') && user.formation.length > 0)
+								{
+									if(user.formation != parts[0].toUpperCase())
+									{
+										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+										return false;
+									}
+								}
+								else
+								{
+									switch(parts[0].toUpperCase())
+									{
+										case "SIG":
+										case "SIC":
+										case "ISD":
+											break;
+
+										default:
+											dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+											return false;
+									}
+								}
+
+								if((typeof user.formation !== 'undefined') && user.promotion.length > 0)
+								{
+									if(user.promotion != parts[1])
+									{
+										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+										return false;
+									}
+								}
+								else
+								{
+									let value = parseInt(parts[1]);
+									if(isNaN(value))
+									{
+										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+										return false;
+									}
+
+									if(value < 1985 || value > (new Date()).getFullYear() + 6)
+									{
+										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+										return false;
+									}
+								}
+
+								return true;
+							}
+
+							dmChannel.awaitMessages(filter, {max: 1}).then(async function(collected)
+							{
+								let parts = collected.first().content.split(" ");
+								discordUtils.reactRightMessage(collected.first(), createLanguageMessage(confirmMessageFrench, confirmMessageEnglish, isFrench));
+
+								await module.exports.applyNewMember(data, guildMember, name, birthday, parts[0].toUpperCase(), parts[1]);
+							});
+
+							
 						});
 
-						
+							
 					});
-
-					
 				});
-			}
-		);
+			});
+		});
 	},
 
 	applyNewMember : async function(data, guildMember, name, birthday = null, formation = null, promotion = null)
@@ -454,4 +534,14 @@ let createAndSendSheetClear = function(data, guildMember, range)
 
 let upperCaseFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+
+let createLanguageMessage = function(frenchMessage, englishMessage, isFrench)
+{
+	return isFrench ? frenchMessage : englishMessage;
+}
+
+let createBilingueMessage = function(frenchMessage, englishMessage)
+{
+	return ":flag_fr: **Version Française :**\n\n" + frenchMessage + "\n\n\n:flag_gb: **English Version:**\n\n" + englishMessage;
 }
