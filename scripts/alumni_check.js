@@ -3,7 +3,7 @@ const google = require('./google.js');
 
 const chooseLanguageFrench = "Pouvez vous sélectionner le drapeau correspondant à la langue que vous souhaitez utiliser ?";
 
-const chooseLanguageEnglish = "Can you click on the flag of the language you want to use ?";
+const chooseLanguageEnglish = "Can you click on the flag of the language you want to use?";
 
 
 const askMessageFrench = "\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n" 
@@ -14,21 +14,22 @@ const askMessageFrench = "\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_
 const askMessageEnglish = "\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\n" 
 	+ "\u200B\n" 
 	+ ":flag_gb: **English version selected :**\n\n" 
-	+ "Hello ! Can you write a message in the form \"First_Name Last_Name\" to be registered in Rubika Alumni server ?";
+	+ "Hello ! Can you write a message in the format \"FirstName LastName\" to be registered in Rubika Alumni server?";
 
 
 const birthdayMessageFrench = "Enchanté $$$. Je vais avoir besoin de quelques informations pour confirmer votre identité. Pouvez vous m'indiquer votre date de naissance sous la forme \"JJ/MM/AAAA\" ? (Ex : 31/01/1970)";
 
-const birthdayMessageEnglish = "Nice to meet you $$$. I will need some informations to confirm your identity. Can you give me your date of birth in the form \"DD/MM/YYYY\" (french form) ? (Ex : 31/01/1970)";
+const birthdayMessageEnglish = "Nice to meet you $$$. I will need some informations to confirm your identity. Can you give me your date of birth in the format \"DD/MM/YYYY\"? (Ex : 31/01/1970)";
 
-const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle promotion êtes vous suivi de votre année de sortie de l'école ?\n\n" 
+
+const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle formation êtes vous suivi de votre année de sortie de l'école ?\n\n" 
 	+ "Pour rappel :\n" 
 	+ "- SIG => GAME\n" 
 	+ "- SIC => COM / ANIM\n" 
 	+ "- ISD => Institut Supérieur du Design\n\n" 
 	+ "Ex : \"SIG 2019\"";
 
-const promotionMessageEnglish = "Thank you. Last question, can you give me your cursus and the year of your graduation ?\n\n" 
+const promotionMessageEnglish = "Thank you. Last question, can you give me your cursus and your graduation year?\n\n" 
 	+ "As a reminder:\n" 
 	+ "- SIG => GAME\n" 
 	+ "- SIC => COM / ANIM\n" 
@@ -44,33 +45,33 @@ const confirmMessageFrench = "**Vous avez bien été enregistré dans le serveur
 	+ "<#881949055150866494> : pour toutes les suggestions et améliorations\n\n" 
 	+ "Bonne journée et bienvenue !";
 
-const confirmMessageEnglish = "**You are successfully register !**\n\n" 
-	+ "More important channels:\n" 
-	+ "<#852099541079556096>: to join one or many city et participate to events\n" 
-	+ "<#875411952313188373>: to follow the general announcement for everyone\n" 
-	+ "<#875411975256018954>: to ask for new city\n" 
-	+ "<#881949055150866494>: for all suggestions and ameliorations\n\n" 
-	+ "Good Day and Welcome !";
+const confirmMessageEnglish = "**You are sucessfully registered!**\n\n" 
+	+ "Most important channels:\n" 
+	+ "<#852099541079556096>: to join one or several cities and join their events\n" 
+	+ "<#875411952313188373>: the general announcement for everyone\n" 
+	+ "<#875411975256018954>: to ask for new cities\n" 
+	+ "<#881949055150866494>: for all ideas and suggestions\n\n" 
+	+ "Have a nice day and welcome!";
 
 
 const notFoundMessageFrench = "Je suis désolé, mais je n'arrive pas à trouver le nom $$$ dans la base de donnée. Pouvez vous vérifier qu'il n'y avait pas d'erreur de frappe et réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
 
-const notFoundMessageEnglish = "I'm sorry but I can't find the name $$$ in the databse. Can you verify the are no typing error and try again ? If the problem persist, please contact a moderator to have help.";
+const notFoundMessageEnglish = "I'm sorry but I couldn't find the name $$$. Can you check for any typing mistakes and try again? If the problem persist, please contact a moderator to have help.";
 
 
 const badBirthdayMessageFrench = "Je suis désolé mais cela ne correspond pas. Pouvez vous réessayer (attention à bien faire jour/mois/année) ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
 
-const badBirthdayMessageEnglish = "I'm sorry but it does not work. Can you try again (be carreful to type Day/Month/Year) ? If the problem persist, please contact a moderator to have help.";
+const badBirthdayMessageEnglish = "I'm sorry but it does not work. Can you try again (be carreful to type Day/Month/Year)? If the problem persist, please contact a moderator to have help.";
 
 
 const badInformationsMessageFrench = "Je suis désolé, mais les informations ne correspondent pas. Pouvez vous réessayer ? Si le soucis persiste, n'hésitez pas à envoyer un message aux modérateurs pour qu'ils puissent vous aider.";
 
-const badInformationsMessageEnglish = "I'm sorry but it does not work. Can you try again ? If the problem persist, please contact a moderator to have help.";
+const badInformationsMessageEnglish = "I'm sorry but it does not work. Can you try again? If the problem persist, please contact a moderator to have help.";
 
 
 const alreadyRegisteredMessageFrench = "Je suis désolé, mais le nom que vous avez saisi est déjà enregistré pour le serveur. Si c'est bien le votre, merci de contacter un modérateur pour qu'ils puissent vérifier le problème avec vous.";
 
-const alreadyRegisteredMessageEnglish = "I'm sorry but the name is already registered on the server. If it is really yours, please contact a moderator who will can check with you.";
+const alreadyRegisteredMessageEnglish = "I'm sorry but the name is already registered on the server. If it is really yours, please contact a moderator so that we can help you.";
 
 
 const check_no_registered = "Non";

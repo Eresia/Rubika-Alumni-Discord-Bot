@@ -280,7 +280,8 @@ bot.on('ready', function () {
 								{
 									type: 'text',
 									reason: 'Create serious channel for city ' + city,
-									parent: newCategory
+									parent: newCategory,
+									rateLimitPerUser: 30
 								});
 
 								message.guild.channels.create("💡idées-" + city, 
