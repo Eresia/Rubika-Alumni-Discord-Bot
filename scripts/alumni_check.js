@@ -22,7 +22,7 @@ const birthdayMessageFrench = "Enchanté $$$. Je vais avoir besoin de quelques i
 const birthdayMessageEnglish = "Nice to meet you $$$. I will need some informations to confirm your identity. Can you give me your date of birth in the format \"DD/MM/YYYY\"? (Ex : 31/01/1970)";
 
 
-const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle formation êtes vous suivi de votre année de sortie de l'école ?\n\n" 
+const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle formation êtes vous, suivi de votre année de sortie de l'école ?\n\n" 
 	+ "Pour rappel :\n" 
 	+ "- SIG => GAME\n" 
 	+ "- SIC => COM / ANIM\n" 
@@ -396,7 +396,7 @@ module.exports = {
 		});
 	},
 
-	applyNewMember : async function(data, guildMember, name, birthday = null, formation = null, promotion = null)
+	applyNewMember : function(data, guildMember, name, birthday = null, formation = null, promotion = null)
 	{
 		let dataGuild = data[guildMember.guild.id];
 
@@ -422,32 +422,51 @@ module.exports = {
 			user.promotion = promotion;
 		}
 
-		guildMember.roles.remove(dataGuild.invalidRole);
-		guildMember.roles.add(dataGuild.validRole);
+		guildMember.roles.remove(dataGuild.invalidRole).then(function()
+		{ 
+			guildMember.roles.add(dataGuild.validRole).then(async function()
+			{ 
+				let promise = null;
 
-		if(typeof user.formation !== 'undefined')
-		{
-			switch(user.formation)
-			{
-				case "SIG":
-					guildMember.roles.add(dataGuild.gameRole);
-					break;
+				if(typeof user.formation !== 'undefined')
+				{
+					switch(user.formation)
+					{
+						case "SIG":
+							promise = guildMember.roles.add(dataGuild.gameRole);
+							break;
 
-				case "SIC":
-					guildMember.roles.add(dataGuild.animationRole);
-					break;
+						case "SIC":
+							promise = guildMember.roles.add(dataGuild.animationRole);
+							break;
 
-				case "ISD":
-					guildMember.roles.add(dataGuild.designRole);
-					break;
-			}
-		}		
+						case "ISD":
+							promise = guildMember.roles.add(dataGuild.designRole);
+							break;
+					}
+				}
 
-		try {
-			await guildMember.setNickname(upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
-		} catch(err) {
-			console.log("Can't change nickname of " + guildMember.user.tag);
-		}
+				if(promise == null)
+				{
+					try {
+						await guildMember.setNickname(upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
+					} catch(err) {
+						console.log("Can't change nickname of " + guildMember.user.tag);
+					}
+				}
+				else
+				{
+					promise.then(async function()
+					{
+						try {
+							await guildMember.setNickname(upperCaseFirstLetter(user.firstName)  + " " + upperCaseFirstLetter(user.lastName));
+						} catch(err) {
+							console.log("Can't change nickname of " + guildMember.user.tag);
+						}
+					});
+				}
+			});
+		});
 
 		module.exports.registerUser(data, guildMember, user);
 

@@ -174,10 +174,10 @@ bot.on('ready', function () {
 							break;
 						}
 
-						if(commands.length < 4)
+						if(commands.length < 5)
 						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji city_name'");
-							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Neuville Sur Oise");
+							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
+							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
 							break;
 						}
 
@@ -185,12 +185,47 @@ bot.on('ready', function () {
 						const regexEmoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/gi;
 						if(!regexEmoji.test(emoji) && ((emoji.charAt(0) != ':' ) || (emoji.charAt(emoji.length - 1) != ':' )))
 						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji city_name'");
-							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Neuville Sur Oise");
+							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
+							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
 							break;
 						}
 
-						let city = message.content.substring(commands[0].length + commands[1].length + commands[2].length + 3);
+						let continentString = commands[3];
+						let continent = -1;
+
+						switch(continentString.toLocaleLowerCase())
+						{
+							case 'europe':
+								continent = 0;
+								break;
+
+							case 'na':
+								continent = 1;
+								break;
+
+							case 'asia':
+								continent = 2;
+								break;
+						}
+
+						if(continent == -1)
+						{
+							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
+							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
+							break;
+						}
+
+						let lastSubstringWord = 4;
+						let citySubstringBegin = 0;
+
+						for(let i = 0; i < lastSubstringWord; i++)
+						{
+							citySubstringBegin += commands[i].length;
+						}
+
+						citySubstringBegin += lastSubstringWord;
+
+						let city = message.content.substring(citySubstringBegin);
 
 						let textPosition = discordUtils.getRoleById(message.guild, data[serverId].gameRole).position;
 
@@ -299,14 +334,81 @@ bot.on('ready', function () {
 								{
 									let baseEmbed = eventMessage.embeds[0];
 		
-									let title = baseEmbed.title;
-									let description = baseEmbed.description.replace(/\n/g, "\\n") + "\\n" + emoji + " - " + city.toUpperCase();
-									let constructMessage = ( "\u200B\n**==Ces deux commandes sont à copier coller==**\n\nCommande 1 : \n```"
-										+ "z/edit " + messageId + " {\n\"color\": 0,\n\"title\": \"" 
-										+ title + "\",\n\"description\": \"" + description + "\"\n}"
+									let title = baseEmbed.title.replace(/\n/g, "\\n");
+									let description = null;
+									
+									if(baseEmbed.description != null)
+									{
+										description = baseEmbed.description.replace(/\n/g, "\\n");
+									}
+									
+									let fields = "";
+
+									for(let i = 0; i < baseEmbed.fields.length; i++)
+									{
+										if(i != 0)
+										{
+											fields += ",";
+										}
+
+										fields += '{"name": "' + baseEmbed.fields[i].name.replace(/\n/g, "\\n") + '", "value": "';
+
+										if(continent != i)
+										{
+											if(baseEmbed.fields[i].value == "\u200B")
+											{
+												fields += "\\u200B";
+											}
+											else
+											{
+												fields += baseEmbed.fields[i].value.replace(/\n/g, "\\n");
+											}
+										}
+										else
+										{
+											let allCities = [];
+
+											if(baseEmbed.fields[i].value != "\u200B")
+											{
+												let split = baseEmbed.fields[i].value.split("\n");
+	
+												for(let j = 0; j < split.length; j++)
+												{
+													allCities.push({"name": split[j].split(" - ")[1], "value": split[j]});
+												}
+											}
+
+											allCities.push({"name": city.toUpperCase(), "value": emoji + " - " + city.toUpperCase()});
+
+											allCities.sort((a, b) => a.name.localeCompare(b.name));
+
+											for(let j = 0; j < allCities.length; j++)
+											{
+												if(j != 0)
+												{
+													fields += "\\n";
+												}
+
+												fields += allCities[j].value;
+											}
+										}
+
+										fields += '", "inline": true}';
+									}
+									
+									+ "\\n" + emoji + " - " + city.toUpperCase();
+									let constructMessage = '\u200B\n**==Ces deux commandes sont à copier coller==**\n\nCommande 1 : \n```'
+										+ 'z/edit ' + messageId + ' {\n"color": 0,\n"title": "'+ title + '",\n';
+
+									if(description != null)
+									{
+										constructMessage += '"description": "' + description + '"\n';
+									}
+										
+									constructMessage += '"fields": [' + fields + ']}'
 										+ "```\nCommande 2 : \n```"
 										+ "z/normal " + emoji + " " + discordUtils.getRoleStringById(newRole.id)
-										+ "```" );
+										+ "\n```";
 
 									message.channel.send(constructMessage);
 								});
