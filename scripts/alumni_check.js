@@ -23,18 +23,16 @@ const birthdayMessageEnglish = "Nice to meet you $$$. I will need some informati
 
 
 const promotionMessageFrench = "Merci beaucoup. Une dernière petite question, pouvez vous m'indiquer de quelle formation êtes vous, suivi de votre année de sortie de l'école ?\n\n" 
-	+ "Pour rappel :\n" 
-	+ "- SIG => GAME\n" 
-	+ "- SIC => COM / ANIM\n" 
-	+ "- ISD => Institut Supérieur du Design\n\n" 
-	+ "Ex : \"SIG 2019\"";
+	+ "- \"GAME\" pour Rubika Jeu Vidéo (ex Supinfogame)\n" 
+	+ "- \"ANIM\" pour Rubika Animation (ex Supinfocom)\n" 
+	+ "- \"DESIGN\" pour Rubika Design (ex ISD)\n\n" 
+	+ "Ex : \"ANIM 2019\"";
 
 const promotionMessageEnglish = "Thank you. Last question, can you give me your cursus and your graduation year?\n\n" 
-	+ "As a reminder:\n" 
-	+ "- SIG => GAME\n" 
-	+ "- SIC => COM / ANIM\n" 
-	+ "- ISD => Design\n\n" 
-	+ "Ex : \"SIG 2019\"";
+	+ "- \"GAME\" for Rubika Video Game (ex Supinfogame)\n" 
+	+ "- \"ANIM\" for Rubika Animation (ex Supinfocom)\n" 
+	+ "- \"DESIGN\" for Rubika Design (ex ISD)\n\n" 
+	+ "Ex : \"ANIM 2019\"";
 
 
 const confirmMessageFrench = "**Vous avez bien été enregistré dans le serveur !**\n\n" 
@@ -328,51 +326,55 @@ module.exports = {
 									return false;
 								}
 
-								if((typeof user.formation !== 'undefined') && user.formation.length > 0)
+								switch(parts[0].toUpperCase())
 								{
-									if(user.formation != parts[0].toUpperCase())
-									{
-										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
-										return false;
-									}
-								}
-								else
-								{
-									switch(parts[0].toUpperCase())
-									{
-										case "SIG":
-										case "SIC":
-										case "ISD":
-											break;
+									case "GAME":
+										if(user.formation !== 'undefined')
+										{
+											if(user.formation != "SIG")
+											{
+												dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+												return false;
+											}
+										}
+										break;
+									case "ANIM":
+										if(user.formation !== 'undefined')
+										{
+											if(user.formation != "SIC")
+											{
+												dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+												return false;
+											}
+										}
+										break;
+									case "DESIGN":
+										if(user.formation !== 'undefined')
+										{
+											if(user.formation != "ISD")
+											{
+												dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+												return false;
+											}
+										}
+										break;
 
-										default:
-											dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
-											return false;
-									}
+									default:
+										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+										return false;
 								}
 
-								if((typeof user.formation !== 'undefined') && user.promotion.length > 0)
+								let value = parseInt(parts[1]);
+								if(isNaN(value))
 								{
-									if(user.promotion != parts[1])
-									{
-										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
-										return false;
-									}
+									dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+									return false;
 								}
-								else
-								{
-									let value = parseInt(parts[1]);
-									if(isNaN(value))
-									{
-										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
-										return false;
-									}
 
-									if(value < 1985 || value > (new Date()).getFullYear() + 6)
-									{
-										dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
-										return false;
-									}
+								if(value < 1985 || value > (new Date()).getFullYear() + 6)
+								{
+									dmChannel.send(createLanguageMessage(badInformationsMessageFrench, badInformationsMessageEnglish, isFrench));
+									return false;
 								}
 
 								return true;

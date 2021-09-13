@@ -4,23 +4,25 @@ const discordUtils = require('./discordUtils.js');
 module.exports = {
     displayDiscordMessages(bot)
     {
-        //writeMessages(bot);
+        writeMessages(bot);
         //editMessages(bot);
     }
 }
 
-let writeMessages = function(bot, )
+let writeMessages = function(bot)
 {
     // discordUtils.logMessage(bot, '855102070633398282', welcomeMessage());
     // discordUtils.logMessage(bot, '852099574050979870', ruleMessage());
-    // discordUtils.logMessage(bot, '852099574050979870', roleMessage(bot));
+    // discordUtils.logMessage(bot, '852099574050979870', roleMessage());
+    //discordUtils.logMessage(bot, '875411975256018954', addNewTownMessage());
 }
 
 let editMessages = function(bot)
 {
-    discordUtils.getMessageById(bot, '855102070633398282', '878215162144911381').then(message => message.edit(welcomeMessage()));
+    //discordUtils.getMessageById(bot, '855102070633398282', '878215162144911381').then(message => message.edit(welcomeMessage()));
     //discordUtils.getMessageById(bot, '852099574050979870', '859808840358559754').then(message => message.edit(ruleMessage()));
-    //discordUtils.getMessageById(bot, '852099574050979870', '878187153253883954').then(message => message.edit(roleMessage(bot)));
+    //discordUtils.getMessageById(bot, '852099574050979870', '878187153253883954').then(message => message.edit(roleMessage()));
+    //discordUtils.getMessageById(bot, '875411975256018954', '887044633614491679').then(message => message.edit(addNewTownMessage()));
 }
 
 let welcomeMessage = function(bot)
@@ -46,7 +48,7 @@ let ruleMessage = function()
     return embed;
 }
 
-let roleMessage = function(bot)
+let roleMessage = function()
 {
     let embed = new Discord.MessageEmbed();
     embed.setTitle("Rôles du serveur");
@@ -55,6 +57,14 @@ let roleMessage = function(bot)
     embed.addField("\u200B", discordUtils.getRoleStringById('852540315398963200') + " : En charge du bon déroulé des discussions et du respect des règles");
     embed.addField("\u200B", discordUtils.getRoleStringById('859129781131411497') + " : Responsable d'une ville, il gère les events de sa ville et l'accueil des nouveaux");
     embed.addField("\u200B", discordUtils.getRoleStringById('859126261230338098') + " : Ancien élève de Rubika, tous les membres du discord !");
+
+    return embed;
+}
+
+let addNewTownMessage = function()
+{
+    let embed = new Discord.MessageEmbed();
+    embed.setDescription("More info on <#875411975256018954> channel :\n- Each city will be added if it has at least 10 upvotes (:thumbsup:)\n- Please keep the channel as clean as possible\n- Add an emoji for your town");
 
     return embed;
 }
