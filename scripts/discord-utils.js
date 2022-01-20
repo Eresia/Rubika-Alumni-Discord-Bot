@@ -162,11 +162,11 @@ module.exports = {
 		return result;
 	},
 
-	getChannelById : function(bot, id)
+	getChannelById : function(client, id)
 	{
 		let channel = null;
 
-		bot.channels.cache.forEach(chan =>
+		client.channels.cache.forEach(chan =>
 		{
 			if(chan.id == id)
 			{
@@ -197,10 +197,10 @@ module.exports = {
 		return result;
 	},
 
-	getMessageById : function(bot, channelId, messageId)
+	getMessageById : function(client, channelId, messageId)
 	{
 		let result = null;
-		let channel = this.getChannelById(bot, channelId);
+		let channel = this.getChannelById(client, channelId);
 		if(channel == null)
 		{
 			return null;
@@ -258,7 +258,7 @@ module.exports = {
 		module.exports.reactMessage(message, "⚠", content);
 	},
 
-	logMessage : function(bot, logChannelId, message)
+	logMessage : function(client, logChannelId, message)
 	{
 		if(!hasLoggingMessage)
 		{
@@ -270,7 +270,7 @@ module.exports = {
 			return null;
 		}
 
-		let channel = module.exports.getChannelById(bot, logChannelId);
+		let channel = module.exports.getChannelById(client, logChannelId);
 
 		if(channel == null)
 		{
@@ -287,7 +287,7 @@ module.exports = {
 		return embed;
 	},
 
-	logEmbedMessage : function(bot, logChannelId, message, color = null)
+	logEmbedMessage : function(client, logChannelId, message, color = null)
 	{
 		let embed = new Discord.MessageEmbed();
 		embed.setDescription(message);
@@ -295,12 +295,12 @@ module.exports = {
 		{
 			embed.setColor(color);
 		}
-		return this.logMessage(bot, logChannelId, embed);
+		return this.logMessage(client, logChannelId, embed);
 	},
 
-	editMessageById : function(bot, channelId, messageId, newMessage)
+	editMessageById : function(client, channelId, messageId, newMessage)
 	{
-		let messagePromise = this.getMessageById(bot, channelId, messageId);
+		let messagePromise = this.getMessageById(client, channelId, messageId);
 
 		if(messagePromise == null)
 		{

@@ -24,35 +24,63 @@ async function setRole(interaction, dataManager, roleDescription, roleName)
     await interaction.reply('Role ' + DiscordUtils.getRoleStringById(role.id) + ' is now ' + roleDescription);
 }
 
-function addRoleCommand(command, roleDescription, roleName, needRefreshCommands = false)
-{
-    allCommands.push({
-        data: new SlashCommandBuilder()
-                .setName(command)
-                .setDescription('Set ' + roleDescription + ' role')
-                .addRoleOption(option => 
-                    option
-                        .setName('role-tag')
-                        .setDescription('Tag of the ' + roleDescription + ' role')
-                        .setRequired(true)
-                ),
+allCommands.push({
+    data: new SlashCommandBuilder()
+            .setName('role-bot-manager')
+            .setDescription('Set bot manager role')
+            .addRoleOption(option => 
+                option
+                    .setName('role-tag')
+                    .setDescription('Tag of the bot manager role')
+                    .setRequired(true)
+            ),
 
-        needRefreshCommands : needRefreshCommands,
+    needRefreshCommands : true,
 
-        async execute(interaction, dataManager) {
-            await setRole(interaction, dataManager, roleDescription, roleName);
-        }
-    });
+    async execute(interaction, dataManager) {
+        await setRole(interaction, dataManager, 'bot manager', 'botManagerRole');
+    }
+});
+
+let allRoleCommand = {
+    data: new SlashCommandBuilder()
+                .setName("role")
+                .setDescription('Set gestion roles'),
+
+    commandRoles : {},
+
+    async execute(interaction, dataManager) {
+        let subcommand = interaction.options.getSubcommand();
+        await setRole(interaction, dataManager, this.commandRoles[subcommand].description, this.commandRoles[subcommand].name);
+    }
 }
 
-addRoleCommand('role-bot-manager', 'bot manager', 'botManagerRole', true);
-addRoleCommand('role-invalid', 'invalid', 'invalidRole');
-addRoleCommand('role-valid', 'valid', 'validRole');
-addRoleCommand('role-game', 'game', 'gameRole');
-addRoleCommand('role-animation', 'animation', 'animationRole');
-addRoleCommand('role-design', 'design', 'designRole');
-addRoleCommand('role-ambassador', 'ambassador', 'ambassadorRole');
-addRoleCommand('role-bot-event', 'bot-event', 'botEventRole');
+function addRoleCommand(command, roleDescription, roleName)
+{
+    allRoleCommand.data.addSubcommand(subcommand =>
+        subcommand
+            .setName(command)
+            .setDescription('Set ' + roleDescription + ' role')
+            .addRoleOption(option => 
+                option
+                    .setName('role-tag')
+                    .setDescription('Tag of the ' + roleDescription + ' role')
+                    .setRequired(true)
+            )
+    );
+
+    allRoleCommand.commandRoles[command] = {name: roleName, description: roleDescription};
+}
+
+addRoleCommand('invalid', 'invalid', 'invalidRole');
+addRoleCommand('valid', 'valid', 'validRole');
+addRoleCommand('game', 'game', 'gameRole');
+addRoleCommand('animation', 'animation', 'animationRole');
+addRoleCommand('design', 'design', 'designRole');
+addRoleCommand('ambassador', 'ambassador', 'ambassadorRole');
+addRoleCommand('bot-event', 'bot event', 'botEventRole');
+
+allCommands.push(allRoleCommand);
 
 module.exports = {
     allCommands

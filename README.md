@@ -32,32 +32,32 @@ After that, don't forgive to give this role to concerned person (admins need rol
 For setup basic necessary roles. Syntax :
 
 ```
-/<role-command> <RoleTag>
+/role <role-command> <RoleTag>
 ```
 
-- role-invalid : role for not registered user
-- role-valid : role for registered user
-- role-game : role for game formation
-- role-animation : role for animation formation
-- role-design : role for design formation
-- role-ambassador : role for ambassadors
-- role-bot-event : role for bot event
+- invalid : role for not registered user
+- valid : role for registered user
+- game : role for game formation
+- animation : role for animation formation
+- design : role for design formation
+- ambassador : role for ambassadors
+- bot-event : role for bot event
 
-#### Commands for the member gestion
-
-```
-ask-user-pm : send welcome message to the user dm. 
-Syntax : /ask-user-pm <MemberTag>
-```
+#### Commands for the user gestion
 
 ```
-register-user : Add directly the member without dm.
-Syntax : /register-user <MemberTag> <FormationName>
+ask-user : send welcome message to the user dm. 
+Syntax : /user ask-pm <MemberTag>
 ```
 
 ```
-remove-user : Remove the member.
-Syntax : /remove-user <MemberTag>
+register : Add directly the user without dm.
+Syntax : /user register <MemberTag> <FormationName> [NewPseudo]
+```
+
+```
+remove : Remove the user.
+Syntax : /user remove <MemberTag>
 ```
 
 #### Usefull commands
@@ -69,5 +69,5 @@ Syntax : /new-city <emoji> <location> <cityName>
 
 ```
 embed : Generate embed message.
-Syntax : *Not implemented yet*
+Syntax : /embed [title] [description] ([field1-title] [field1-description] [field1-inline]) ([field2-title] [field2-description] [field2-inline])...
 ```

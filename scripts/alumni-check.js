@@ -20,21 +20,21 @@ const askName =
 
 const confirmMessage = 
 {
-	FR : "**Vous avez bien été enregistré dans le serveur !**\n\n" 
-	+ "Les channels les plus importants :\n" 
-	+ "<#852099541079556096> :  pour rejoindre une ou plusieurs villes et participer à ses événements\n" 
-	+ "<#875411952313188373> : les annonces qui concernent tout le monde\n" 
-	+ "<#875411975256018954> : pour proposer de nouvelles villes\n" 
-	+ "<#881949055150866494> : pour toutes les suggestions et améliorations\n\n" 
-	+ "Bonne journée et bienvenue !",
+	FR : '**Vous avez bien été enregistré dans le serveur !**\n\n' 
+	+ 'Les channels les plus importants :\n' 
+	+ '<#852099541079556096> :  pour rejoindre une ou plusieurs villes et participer à ses événements\n' 
+	+ '<#875411952313188373> : les annonces qui concernent tout le monde\n' 
+	+ '<#875411975256018954> : pour proposer de nouvelles villes\n' 
+	+ '<#881949055150866494> : pour toutes les suggestions et améliorations\n\n' 
+	+ 'Bonne journée et bienvenue !',
 
-	EN : "**You are sucessfully registered!**\n\n" 
-	+ "Most important channels:\n" 
-	+ "<#852099541079556096>: to join one or several cities and join their events\n" 
-	+ "<#875411952313188373>: the general announcement for everyone\n" 
-	+ "<#875411975256018954>: to ask for new cities\n" 
-	+ "<#881949055150866494>: for all ideas and suggestions\n\n" 
-	+ "Have a nice day and welcome!"
+	EN : '**You are sucessfully registered!**\n\n' 
+	+ 'Most important channels:\n' 
+	+ '<#852099541079556096>: to join one or several cities and join their events\n' 
+	+ '<#875411952313188373>: the general announcement for everyone\n' 
+	+ '<#875411975256018954>: to ask for new cities\n' 
+	+ '<#881949055150866494>: for all ideas and suggestions\n\n' 
+	+ 'Have a nice day and welcome!'
 }
 
 const removeAllDmMessage = false;
