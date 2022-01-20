@@ -62,5 +62,12 @@ Syntax : /remove-user <MemberTag>
 
 #### Usefull commands
 
-- new-city : Add role and channels for a new city + generate commands for autorole bot. Use : /new-city <emoji> <location> <cityName>
-- embed : Generate embed message. *Not implemented yet*
+```
+new-city : Add role and channels for a new city + generate commands for autorole bot.
+Syntax : /new-city <emoji> <location> <cityName>
+```
+
+```
+embed : Generate embed message.
+Syntax : *Not implemented yet*
+```
