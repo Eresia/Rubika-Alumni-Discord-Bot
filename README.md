@@ -43,11 +43,25 @@ For setup basic necessary roles. Syntax :
 - role-ambassador : role for ambassadors
 - role-bot-event : role for bot event
 
-#### Commands to add new members
+#### Commands for the member gestion
 
-- ask-user-pm : send welcome message to the user dm. Use : /ask-user-pm <MemberTag>
-- register-user : Add directly the member without dm. Use : /register-user <MemberTag> <FormationName>
-- remove-user : Remove the member. Use : /remove-user <MemberTag>
+- ask-user-pm : send welcome message to the user dm. 
+Syntax :
+```
+/ask-user-pm <MemberTag>
+```
+
+- register-user : Add directly the member without dm.
+Syntax :
+```
+/register-user <MemberTag> <FormationName>
+```
+
+- remove-user : Remove the member.
+Syntax :
+```
+/remove-user <MemberTag>
+```
 
 #### Usefull commands
 
