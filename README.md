@@ -45,24 +45,19 @@ For setup basic necessary roles. Syntax :
 
 #### Commands for the member gestion
 
-##### ask-user-pm : send welcome message to the user dm. 
-
-Syntax :
 ```
+ask-user-pm : send welcome message to the user dm. 
 /ask-user-pm <MemberTag>
 ```
 
-##### register-user : Add directly the member without dm.
-
-Syntax :
 ```
+register-user : Add directly the member without dm.
 /register-user <MemberTag> <FormationName>
 ```
 
-##### remove-user : Remove the member.
-
 Syntax :
 ```
+remove-user : Remove the member.
 /remove-user <MemberTag>
 ```
 
