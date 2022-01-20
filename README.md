@@ -47,17 +47,17 @@ For setup basic necessary roles. Syntax :
 
 ```
 ask-user-pm : send welcome message to the user dm. 
-/ask-user-pm <MemberTag>
+Syntax : /ask-user-pm <MemberTag>
 ```
 
 ```
 register-user : Add directly the member without dm.
-/register-user <MemberTag> <FormationName>
+Syntax : /register-user <MemberTag> <FormationName>
 ```
 
 ```
 remove-user : Remove the member.
-/remove-user <MemberTag>
+Syntax : /remove-user <MemberTag>
 ```
 
 #### Usefull commands
