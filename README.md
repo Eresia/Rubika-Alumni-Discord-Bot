@@ -55,7 +55,6 @@ register-user : Add directly the member without dm.
 /register-user <MemberTag> <FormationName>
 ```
 
-Syntax :
 ```
 remove-user : Remove the member.
 /remove-user <MemberTag>
