@@ -1,10 +1,10 @@
 const Discord = require('discord.js');
-const discordUtils = require('./discordUtils.js');
+const discordUtils = require('./discord-utils.js');
 
 module.exports = {
     displayDiscordMessages(bot)
     {
-        writeMessages(bot);
+        //writeMessages(bot);
         //editMessages(bot);
     }
 }

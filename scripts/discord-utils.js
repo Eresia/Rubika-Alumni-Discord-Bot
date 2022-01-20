@@ -14,48 +14,56 @@ module.exports = {
 		return "<@" + id + ">";
 	},
 
-	getGuildById : function(bot, id)
+	getGuildById : async function(client, id)
 	{
-		let result = null;
-		bot.guilds.cache.forEach(guild =>{
+		await client.guilds.fetch();
+
+		for(let i = 0; i < client.guilds.cache.size; i++)
+		{
+			let guild = client.guilds.cache.at(i);
+
 			if(guild.id == id)
 			{
-				result = guild;
+				return guild;
 			}
-		});
+		}
 
-		return result;
+		return null;
 	},
 
-	getUserById : function(guild, id)
+	getMemberById : function(guild, id)
 	{
-		let result = null;
-		guild.members.cache.forEach(user =>{
-			if(user.id == id)
-			{
-				result = user;
-			}
-		});
+		for(let i = 0; i < guild.members.cache.size; i++)
+		{
+			let member = guild.members.cache.at(i);
 
-		return result;
+			if(member.id == id)
+			{
+				return member;
+			}
+		}
+
+		return null;
 	},
 
 	getRoleById : function(guild, id)
 	{
-		let result = null;
-		guild.roles.cache.forEach(role =>{
+		for(let i = 0; i < guild.roles.cache.size; i++)
+		{
+			let role = guild.roles.cache.at(i);
+
 			if(role.id == id)
 			{
-				result = role;
+				return role;
 			}
-		});
+		}
 
-		return result;
+		return null;
 	},
 
 	getUserNameById : function(guild, id)
 	{
-		let user = module.exports.getUserById(guild, id);
+		let user = module.exports.getMemberById(guild, id);
 		let result = "Unknow";
 
 		if(user == null)
@@ -77,7 +85,7 @@ module.exports = {
 
 	getUserBaseNameById : function(guild, id)
 	{
-		let user = module.exports.getUserById(guild, id);
+		let user = module.exports.getMemberById(guild, id);
 		let result = "Unknow";
 
 		if(user == null)
@@ -90,7 +98,7 @@ module.exports = {
 
 	getUserTagById : function(guild, id)
 	{
-		let user = module.exports.getUserById(guild, id);
+		let user = module.exports.getMemberById(guild, id);
 		let result = "Unknow";
 
 		if(user == null)
@@ -142,7 +150,6 @@ module.exports = {
 
 	getRoleIdByString : function(string)
 	{
-
 		let result = -1;
 
 		if(string.substring(0, 3) == "<@&")
@@ -202,18 +209,19 @@ module.exports = {
 		return channel.messages.fetch(messageId);
 	},
 
-	getRoleIdByGameId : function(array, gameId)
+	hasMemberRole : function(guildMember, roleId)
 	{
-		let result = -1;
-		Object.keys(array).forEach(role =>
+		for(let i = 0; i < guildMember.roles.cache.size; i++)
 		{
-			if(array[role] == gameId)
-			{
-				result = role;
-			}
-		});
+			let role = guildMember.roles.cache.at(i);
 
-		return result;
+			if(role.id == roleId)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	},
 
 	reactMessage : function(message, reaction, content)

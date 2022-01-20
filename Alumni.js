@@ -1,793 +1,213 @@
 const path = require('path');
 const fs = require('fs');
-const Discord = require('discord.js');
-const bot = new Discord.Client();
-const discordUtils = require('./scripts/discordUtils.js');
-const logMessage = require('./scripts/log.js').logMessage;
-const alumni = require('./scripts/alumni_check.js');
-const admin_text = require('./scripts/admin_text.js');
-const { parse } = require('path');
-const { reactMessage } = require('./scripts/discordUtils.js');
+const { Client, Collection, Intents } = require('discord.js');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
+const DiscordUtils = require('./scripts/discord-utils.js');
+const LogMessage = require('./scripts/log.js').logMessage;
+const AdminText = require('./scripts/admin-text.js');
+const DataManager = require('./scripts/data-manager.js');
+const AlumniCheck = require('./scripts/alumni-check.js');
+const { clientId, token } = require('./config.json');
 
-const directoryPath = path.join(__dirname, 'data');
+const needRefreshCommands = false;
 
-let data = {};
+const guildValues = 
+[
+	{name : 'botManagerRole', defaultValue : -1},
+	{name : 'invalidRole', defaultValue : -1},
+	{name : 'validRole', defaultValue : -1},
+	{name : 'gameRole', defaultValue : -1},
+	{name : 'animationRole', defaultValue : -1},
+	{name : 'designRole', defaultValue : -1},
+	{name : 'ambassadorRole', defaultValue : -1},
+	{name : 'botEventRole', defaultValue : -1}
+];
 
-//google.updateSheets();
+const rest = new REST({ version: '9' }).setToken(token);
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.DIRECT_MESSAGES ] });
 
-fs.mkdirSync(directoryPath, { recursive: true });
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
-let directoryFiles = fs.readdirSync(directoryPath);
-directoryFiles.forEach(function (file) {
-	let contents = fs.readFileSync(directoryPath + '/' + file, 'utf8');
-	let temp = JSON.parse(contents);
-	data[temp.serverId] = temp;
-	alumni.updateSheet(data, temp.serverId);
-});
+client.commands = new Collection();
+let commandData = [];
 
-bot.on('ready', function () {
-	let selfId = bot.user.id;
-	logMessage("Je suis connecté !", 2);
+for (const file of commandFiles) {
+	const allCommands = require(`./commands/${file}`).allCommands;
 
-	checkInvalidRoles(bot);
+	for(let i = 0; i < allCommands.length; i++)
+	{
+		client.commands.set(allCommands[i].data.name, allCommands[i]);
+		commandData.push(allCommands[i].data.toJSON());
+	}
+}
 
-	bot.on('message', async function(message) {
+DataManager.initData(path.join(__dirname, 'data'), guildValues);
 
-		if(message.author.bot)
+client.on('ready', async function () {
+	LogMessage("Je suis connecté !", 2);
+
+	if (!client.application?.owner) await client.application?.fetch();
+
+	await refreshCommands();
+
+	//checkInvalidRoles(client);
+
+	client.on('interactionCreate', async function(interaction)
+	{
+		if(!interaction.isCommand())
 		{
 			return;
 		}
 
-		if(message.guild == null)
+		const command = client.commands.get(interaction.commandName);
+
+		if (!command)
 		{
 			return;
 		}
 
-		let serverId = message.guild.id;
-		let channelId = message.channel.id;
-		let isBotManager = false;
+		try {
+			await command.execute(interaction, DataManager);
 
-		if(serverId in data)
-		{
-			message.member.roles.cache.forEach(role => {
-				if(role.id == data[serverId].botManagerRole)
-				{
-					isBotManager = true;
-				}
-			});
+			if('needRefreshCommands' in command && command.needRefreshCommands)
+			{
+				addCommandPermissionsForGuild(interaction.guild);
+			}
+		} catch (error) {
+			console.error(error);
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 		}
+	});
+	
+	client.on('guildMemberAdd', function(guildMember)
+	{
+		AlumniCheck.askMemberInformations(client, DataManager, guildMember.guild, guildMember.user);
+	});
 
-		let isAdmin = (message.member.hasPermission("ADMINISTRATOR"));
-		isBotManager = isBotManager || isAdmin;
-		let commands = message.content.split(' ');
+	client.on('guildCreate', function(guild)
+	{
+		DataManager.initGuildData(guild.id);
+		refreshCommandForGuild(guild);
+	});
 
-		for(let i = 0; i < commands.length; i++)
+	client.on('guildDelete', function(guild)
+	{
+		DataManager.removeGuildData(guild.id);
+	});
+
+	await client.guilds.fetch();
+
+	for(let i = 0; i < client.guilds.cache.size; i++)
+    {
+        let guild = client.guilds.cache.at(i);
+
+		let guildData = DataManager.getServerData(guild.id);
+
+		if(guildData == null)
 		{
-			if(commands[i].length == 0)
-			{
-				commands.splice(i, 1);
-				i--;
-			}
-		}
-
-		if (commands[0] == '!alu') {
-			if(commands.length >= 2)
-			{
-				switch (commands[1])
-				{
-					case 'bot_manager':
-						setRole(data, message, commands, isAdmin, "botManagerRole");
-						break;
-
-					case 'invalid':
-						setRole(data, message, commands, isAdmin, "invalidRole");
-						break;
-
-					case 'valid':
-						setRole(data, message, commands, isAdmin, "validRole");
-						break;
-
-					case 'game':
-						setRole(data, message, commands, isAdmin, "gameRole");
-						break;
-
-					case 'animation':
-						setRole(data, message, commands, isAdmin, "animationRole");
-						break;
-
-					case 'design':
-						setRole(data, message, commands, isAdmin, "designRole");
-						break;
-
-					case 'ambassador':
-						setRole(data, message, commands, isAdmin, "ambassadorRole");
-						break;
-
-					case 'bot-event':
-						setRole(data, message, commands, isAdmin, "botEventRole");
-						break;
-
-					case 'link':
-						if(!isBotManager)
-						{
-							wrongRight(message);
-							break;
-						}
-
-						if(commands.length < 5)
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu link <sheet_id> <page_name> <range>'");
-							message.channel.send("Ex : !alu 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms ClassData A2:E");
-							return;
-						}
-						
-						data[serverId].link = commands[2];
-						data[serverId].page = commands[3];
-						data[serverId].range = commands[4];
-						writeInData(serverId);
-						alumni.updateSheet(data, serverId);
-						discordUtils.reactRightMessage(message);
-						break;
-
-					case 'refresh':
-						if(!isBotManager)
-						{
-							wrongRight(message);
-							break;
-						}
-
-						alumni.updateSheet(data, serverId);
-						discordUtils.reactRightMessage(message);
-						break;
-
-					case 'check_name':
-						if(!isBotManager)
-						{
-							wrongRight(message);
-							break;
-						}
-
-						let name = message.content.substring(commands[0].length + commands[1].length + 2);
-						let user = alumni.getUserByName(serverId, name);
-
-						if(user == null)
-						{
-							discordUtils.reactWrongMessage(message, "Name \"" + name + "\" don't exist in database");
-						}
-						else
-						{
-							if(user.check == "Non")
-							{
-								discordUtils.reactRightMessage(message, "Name \"" + user.firstName + " " + user.lastName + "\" exists in database but is not registered");
-							}
-							else
-							{
-								discordUtils.reactRightMessage(message, "Name \"" + user.firstName + " " + user.lastName + "\" exists in database and is registered");
-							}
-						}
-						break;
-
-					case 'new_city':
-						if(!isBotManager)
-						{
-							wrongRight(message);
-							break;
-						}
-
-						if(commands.length < 5)
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
-							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
-							break;
-						}
-
-						let emoji = commands[2];
-						const regexEmoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/gi;
-						if(!regexEmoji.test(emoji) && ((emoji.charAt(0) != ':' ) || (emoji.charAt(emoji.length - 1) != ':' )))
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
-							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
-							break;
-						}
-
-						let continentString = commands[3];
-						let continent = -1;
-
-						switch(continentString.toLocaleLowerCase())
-						{
-							case 'europe':
-								continent = 0;
-								break;
-
-							case 'na':
-								continent = 1;
-								break;
-
-							case 'asia':
-								continent = 2;
-								break;
-						}
-
-						if(continent == -1)
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu new_city emoji [Europe/NA/Asia] city_name'");
-							message.channel.send("Ex : !alu new_city :man_playing_water_polo: Europe Neuville Sur Oise");
-							break;
-						}
-
-						let lastSubstringWord = 4;
-						let citySubstringBegin = 0;
-
-						for(let i = 0; i < lastSubstringWord; i++)
-						{
-							citySubstringBegin += commands[i].length;
-						}
-
-						citySubstringBegin += lastSubstringWord;
-
-						let city = message.content.substring(citySubstringBegin);
-
-						let textPosition = discordUtils.getRoleById(message.guild, data[serverId].gameRole).position;
-
-						message.guild.roles.create({
-							reason: 'Add Role for city ' + city,
-							data:
-							{
-								name: city,
-								position: discordUtils.getRoleById(message.guild, data[serverId].gameRole).position + 1,
-								mentionable: false,
-								hoist: true
-							}
-						}).then(newRole =>{
-							discordUtils.reactRightMessage(message, "Création du rôle " + discordUtils.getRoleStringById(newRole.id) + " avec succès");
-							message.guild.channels.create(city, 
-							{
-								type: 'category',
-								reason: 'Create Category for city ' + city,
-								permissionOverwrites: 
-								[
-									{
-										id: message.guild.id,
-										deny: 
-										[
-											Discord.Permissions.FLAGS.VIEW_CHANNEL, 
-											Discord.Permissions.FLAGS.SEND_MESSAGES
-										]
-									},
-									{
-										id: newRole.id,
-										allow: 
-										[
-											Discord.Permissions.FLAGS.VIEW_CHANNEL, 
-											Discord.Permissions.FLAGS.SEND_MESSAGES
-										]
-									}
-								]
-							}).then(newCategory => {
-								message.guild.channels.create("🎉events-" + city, 
-								{
-									type: 'text',
-									reason: 'Create event channel for city ' + city,
-									parent: newCategory,
-									permissionOverwrites:
-									[
-										{
-											id: message.guild.id,
-											deny: 
-											[
-												Discord.Permissions.FLAGS.VIEW_CHANNEL, 
-												Discord.Permissions.FLAGS.SEND_MESSAGES
-											]
-										},
-										{
-											id: newRole.id,
-											allow: 
-											[
-												Discord.Permissions.FLAGS.VIEW_CHANNEL
-											]
-										},
-										{
-											id: data[serverId].ambassadorRole,
-											allow: 
-											[
-												Discord.Permissions.FLAGS.SEND_MESSAGES
-											]
-										},
-										{
-											id: data[serverId].botEventRole,
-											allow: 
-											[
-												Discord.Permissions.FLAGS.VIEW_CHANNEL,
-												Discord.Permissions.FLAGS.SEND_MESSAGES
-											]
-										}
-									]
-								});
-
-								message.guild.channels.create("💬general-" + city, 
-								{
-									type: 'text',
-									reason: 'Create general channel for city ' + city,
-									parent: newCategory
-								});
-
-								message.guild.channels.create("💼serious-" + city, 
-								{
-									type: 'text',
-									reason: 'Create serious channel for city ' + city,
-									parent: newCategory,
-									rateLimitPerUser: 30
-								});
-
-								message.guild.channels.create("💡idées-" + city, 
-								{
-									type: 'text',
-									reason: 'Create idées channel for city ' + city,
-									parent: newCategory,
-									rateLimitPerUser: 120
-								});
-
-								let channelId = '852099541079556096';
-								let messageId = '875426135511547974';
-
-								discordUtils.getMessageById(bot, channelId, messageId).then(eventMessage => 
-								{
-									let baseEmbed = eventMessage.embeds[0];
-		
-									let title = baseEmbed.title.replace(/\n/g, "\\n");
-									let description = null;
-									
-									if(baseEmbed.description != null)
-									{
-										description = baseEmbed.description.replace(/\n/g, "\\n");
-									}
-									
-									let fields = "";
-
-									for(let i = 0; i < baseEmbed.fields.length; i++)
-									{
-										if(i != 0)
-										{
-											fields += ",";
-										}
-
-										fields += '{"name": "' + baseEmbed.fields[i].name.replace(/\n/g, "\\n") + '", "value": "';
-
-										if(continent != i)
-										{
-											if(baseEmbed.fields[i].value == "\u200B")
-											{
-												fields += "\\u200B";
-											}
-											else
-											{
-												fields += baseEmbed.fields[i].value.replace(/\n/g, "\\n");
-											}
-										}
-										else
-										{
-											let allCities = [];
-
-											if(baseEmbed.fields[i].value != "\u200B")
-											{
-												let split = baseEmbed.fields[i].value.split("\n");
-	
-												for(let j = 0; j < split.length; j++)
-												{
-													allCities.push({"name": split[j].split(" - ")[1], "value": split[j]});
-												}
-											}
-
-											allCities.push({"name": city.toUpperCase(), "value": emoji + " - " + city.toUpperCase()});
-
-											allCities.sort((a, b) => a.name.localeCompare(b.name));
-
-											for(let j = 0; j < allCities.length; j++)
-											{
-												if(j != 0)
-												{
-													fields += "\\n";
-												}
-
-												fields += allCities[j].value;
-											}
-										}
-
-										fields += '", "inline": true}';
-									}
-									
-									+ "\\n" + emoji + " - " + city.toUpperCase();
-									let constructMessage = '\u200B\n**==Ces deux commandes sont à copier coller==**\n\nCommande 1 : \n```'
-										+ 'z/edit ' + messageId + ' {\n"color": 0,\n"title": "'+ title + '",\n';
-
-									if(description != null)
-									{
-										constructMessage += '"description": "' + description + '"\n';
-									}
-										
-									constructMessage += '"fields": [' + fields + ']}'
-										+ "```\nCommande 2 : \n```"
-										+ "z/normal " + emoji + " " + discordUtils.getRoleStringById(newRole.id)
-										+ "\n```";
-
-									message.channel.send(constructMessage);
-								});
-
-								message.channel.send("Catégorie et chans créés avec succès pour la ville " + city);
-							});
-						});
-						break;
-
-					case 'new':
-						if(!isBotManager)
-						{
-							wrongRight(message);
-							break;
-						}
-
-						if(commands.length < 3)
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu new <user_tag>'");
-							message.channel.send("Ex : !alu new @Eresia#7541");
-							break;
-						}
-
-						let newMember = discordUtils.getUserById(message.guild, discordUtils.getUserIdByString(commands[2]));
-						if(newMember == null)
-						{
-							discordUtils.reactWrongMessage(message, "Member " + commands[2] + " don't exist");
-							break;
-						}
-
-						let alreadyRegistered = false;
-
-						newMember.roles.cache.forEach(role => {
-								if(role.id == data[serverId].validRole)
-								{
-									alreadyRegistered = true;
-								}
-							}
-						);
-
-						if(alreadyRegistered)
-						{
-							discordUtils.reactWrongMessage(message, "Member " + commands[2] + " is already registered");
-							break;
-						}
-
-						if(commands.length > 3)
-						{
-							if(!(await alumni.applyNewMember(data, newMember, message.content.substring(commands[0].length + commands[1].length + commands[2].length + 3))))
-							{
-								discordUtils.reactWrongMessage(message, "Name already registered");
-								break;
-							}
-						}
-						else
-						{
-							if(newMember.user.bot)
-							{
-								discordUtils.reactWrongMessage(message, "Member " + commands[2] + " is a bot");
-								break;
-							}
-
-							alumni.askNewMember(data, newMember);
-						}
-						
-						discordUtils.reactRightMessage(message);
-						break;
-
-						case 'remove':
-							if(!isBotManager)
-							{
-								wrongRight(message);
-								break;
-							}
-	
-							if(commands.length < 3)
-							{
-								discordUtils.reactWrongMessage(message, "use '!alu remove <user_tag>'");
-								message.channel.send("Ex : !alu remove @Eresia#7541");
-								break;
-							}
-	
-							let removeMember = discordUtils.getUserById(message.guild, discordUtils.getUserIdByString(commands[2]));
-							if(removeMember == null)
-							{
-								discordUtils.reactWrongMessage(message, "Member " + commands[2] + " don't exist");
-								break;
-							}
-	
-							let isRegistered = false;
-	
-							removeMember.roles.cache.forEach(role => {
-									if(role.id == data[serverId].validRole)
-									{
-										isRegistered = true;
-									}
-								}
-							);
-	
-							if(!isRegistered)
-							{
-								discordUtils.reactWrongMessage(message, "Member " + commands[2] + " is not registered");
-								break;
-							}
-	
-							alumni.removeMember(data, removeMember, true);
-							
-							discordUtils.reactRightMessage(message);
-							break;
-
-					case 'fusion':
-						if( !isBotManager )
-						{
-							wrongRight(message);
-							break;
-						}
-
-						if(commands.length < 6)
-						{
-							discordUtils.reactWrongMessage(message, "use '!alu fusion <sheet_link> <page_name_from> <page_name_to> <range>'");
-							message.channel.send("Ex : !alu fusion 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms ClassData ClassData2 A2:E");
-							break;
-						}
-
-						let link = commands[2];
-						let from = commands[3];
-						let to = commands[4];
-						let range = commands[5];
-
-						alumni.fusionSheet(link, from, to, range);
-						discordUtils.reactRightMessage(message);
-						break;
-
-					case 'embed':
-						if( !isBotManager )
-						{
-							wrongRight(message);
-							break;
-						}
-
-						generateEmbed(message, commands);
-						break;
-					default:
-						if(isBotManager)
-						{
-							wrongCommand(message);
-						}
-						else
-						{
-							wrongRight(message);
-						}
-						break;
-				}
-			}
-			else if(isBotManager)
-			{
-				wrongCommand(message);
-			}
-			else
-			{
-				wrongRight(message);
-			}
+			continue;
 		}
 		
-	});
-	
-	bot.on("guildMemberAdd", function(guildMember)
-	{
-		alumni.askNewMember(data, guildMember);
-	});
+		await guild.members.fetch();
 
-	bot.on("guildMemberRemove", function(guildMember)
-	{
-		alumni.removeMember(data, guildMember, false);
-	});
+		for(let j = 0; j < guild.members.cache.size; j++)
+    	{
+			let guildMember = guild.members.cache.at(j);
 
-	admin_text.displayDiscordMessages(bot);
+			if(DiscordUtils.hasMemberRole(guildMember, guildData.invalidRole))
+			{
+				AlumniCheck.askMemberInformations(client, DataManager, guild, guildMember.user, false);
+			}
+		}
+    }
+
+	AdminText.displayDiscordMessages(client);
 });
 
-let checkInvalidRoles = function(bot)
+async function refreshCommands()
 {
-	bot.guilds.cache.forEach(guild =>
+	await client.guilds.fetch();
+
+	for(let[guildId, guild] of client.guilds.cache)
+	{
+		if(needRefreshCommands || DataManager.getServerData(guildId) == null)
 		{
-			if(guild.id in data)
-			{
-				if(data[guild.id].invalidRole != -1)
+			DataManager.initGuildData(guildId);
+			await refreshCommandForGuild(guild);
+		}
+	}
+}
+
+async function refreshCommandForGuild(guild)
+{
+	await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
+    console.log('Successfully registered application commands for guild ' + guild.name);
+
+	addCommandPermissionsForGuild(guild);
+}
+
+async function addCommandPermissionsForGuild(guild)
+{
+	await guild.commands.fetch();
+
+	let guildData = DataManager.getServerData(guild.id);
+
+	for(let[commandId, command] of guild.commands.cache)
+	{
+		command.defaultPermission = false;
+
+		if(guildData.botManagerRole != -1)
+		{
+			await command.permissions.set({permissions: 
+			[
 				{
-					guild.members.cache.forEach(member =>
-						{
-							if(!member.user.bot)
-							{
-								member.roles.cache.forEach(role => {
-									if(role.id == data[guild.id].invalidRole)
-									{
-										alumni.askNewMember(data, member, false);
-									}
-								});
-							}
-						}
-					);
+					id: guild.roles.everyone.id,
+					type: 'ROLE',
+					permission: false
+				},
+				{
+					id: guildData.botManagerRole,
+					type: 'ROLE',
+					permission: true
 				}
+			]});
+
+			continue;
+		}
+
+		if(command.name == 'role-bot-manager')
+		{
+			await command.permissions.set({permissions: 
+			[
+				{
+					id: guild.roles.everyone.id,
+					type: 'ROLE',
+					permission: true
+				}
+			]});
+
+			continue;
+		}
+
+		await command.permissions.set({permissions: 
+		[
+			{
+				id: guild.roles.everyone.id,
+				type: 'ROLE',
+				permission: false
 			}
-		}
-	);
-}
-
-let wrongRight = function(message)
-{
-	let string = "Vous n'avez pas les droits pour effectuer cette commande !";
-	discordUtils.reactWrongMessage(message, string);
-}
-
-let wrongCommand = function(message)
-{
-	let string = 'Mauvaise commande. Les commandes possibles sont : "bot_manager", "invalid", "valid", "link", "new", "embed"';
-	discordUtils.reactWrongMessage(message, string);
-}
-
-let initGuild = function(guild, data)
-{
-	let serverId = guild.id;
-
-	if(!(serverId in data))
-	{
-		data[serverId] = {};
+		]});
 	}
 
-	data[serverId].serverId = serverId;
-	data[serverId].serverName = guild.name;
-	initValue(serverId, data, "botManagerRole", -1);
-	initValue(serverId, data, "invalidRole", -1);
-	initValue(serverId, data, "validRole", -1);
-	initValue(serverId, data, "gameRole", -1);
-	initValue(serverId, data, "animationRole", -1);
-	initValue(serverId, data, "designRole", -1);
-	initValue(serverId, data, "ambassadorRole", -1);
-	initValue(serverId, data, "botEventRole", -1);
-	initValue(serverId, data, "link", "");
-	initValue(serverId, data, "page", "");
-	initValue(serverId, data, "range", "");
-
-	writeInData(serverId);
+	console.log('Successfully set command permissions for guild ' + guild.name);
 }
 
-let initValue = function(serverId, data, valueName, initValue)
-{
-	if(!(valueName in data[serverId]))
-	{
-		data[serverId][valueName] = initValue;
-		writeInData(serverId);
-	}
-}
-
-let connect = function()
-{
-	fs.readFile('token', 'utf8', function(err, contents) {
-		if(err)
-		{
-			logMessage("No token file", 1);
-		}
-		else
-		{
-			bot.login(contents);
-		}
-	});
-}
-
-let setChannel = function(data, message, isBotManager, channelName)
-{
-	let serverId = message.guild.id;
-	let channelId = message.channel.id;
-	if( isBotManager )
-	{
-		initGuild(message.guild, data);
-
-		if( data[serverId][channelName] == channelId )
-		{
-			data[serverId][channelName] = -1;
-			writeInData(serverId);
-			message.react('❎');
-		}
-		else
-		{
-			data[serverId][channelName] = channelId;
-			writeInData(serverId);
-			discordUtils.reactRightMessage(message);
-		}
-	}
-	else
-	{
-		discordUtils.reactWrongMessage(message, "Vous n'avez pas les droits pour effectuer cette commande !");
-	}
-}
-
-let setCategory = function(data, message, isBotManager, categoryName)
-{
-	let serverId = message.guild.id;
-	let categoryId = message.channel.parentID;
-	if( isBotManager )
-	{
-		initGuild(message.guild, data);
-
-		if( data[serverId][categoryName] == categoryId )
-		{
-			data[serverId][categoryName] = -1;
-			writeInData(serverId);
-			message.react('❎');
-		}
-		else
-		{
-			data[serverId][categoryName] = categoryId;
-			writeInData(serverId);
-			discordUtils.reactRightMessage(message);
-		}
-	}
-	else
-	{
-		wrongRight(message);
-	}
-}
-
-let setRole = function(data, message, commands, hasRight, roleName)
+function generateEmbed(message, commands)
 {
 	if(commands.length < 3)
 	{
-		discordUtils.reactWrongMessage(message, "use '!alu <RoleCommand> <RoleTag>'");
-		return;
-	}
-
-	setDataRole(data[message.guild.id], message, commands[2], hasRight, roleName);
-}
-
-let setDataRole = function(dataArray, message, roleString, hasRight, roleName)
-{
-	let serverId = message.guild.id;
-	if(!hasRight)
-	{
-		wrongRight(message);
-		return;
-	}
-
-	initGuild(message.guild, data);
-
-	let id = discordUtils.getRoleIdByString(roleString);
-
-	message.guild.roles.fetch(id)
-		.then(role => {
-			dataArray[roleName] = role.id;
-			writeInData(serverId);
-			discordUtils.reactRightMessage(message);
-		})
-		.catch(() => {
-			discordUtils.reactWrongMessage(message, "Can't find the role");
-		});
-}
-
-let writeInAllData = function()
-{
-	Object.keys(data).forEach(key => {
-		writeInData(key);
-	});
-}
-
-let writeInData = function(serverId)
-{
-	let path = directoryPath + '/' + serverId;
-	if(fs.existsSync(path))
-	{
-		fs.unlinkSync(path);
-	}
-
-	fs.writeFileSync(path, JSON.stringify(data[serverId]), 'utf8');
-}
-
-let generateEmbed = function(message, commands)
-{
-	if(commands.length < 3)
-	{
-		discordUtils.reactWrongMessage(message, "You need to precise the message");
+		DiscordUtils.reactWrongMessage(message, "You need to precise the message");
 		return;
 	}
 
@@ -817,7 +237,7 @@ let generateEmbed = function(message, commands)
 			{
 				if(splitContent[i].length > 256)
 				{
-					discordUtils.reactWrongMessage(message, "Title is too long");
+					DiscordUtils.reactWrongMessage(message, "Title is too long");
 					return;
 				}
 				resultEmbded.setTitle(splitContent[i]);
@@ -864,15 +284,7 @@ let generateEmbed = function(message, commands)
 		resultEmbded.addField(actualFieldTitle, actualContent, isActualFieldRown);
 	}
 
-	discordUtils.reactRightMessage(message, resultEmbded);
+	DiscordUtils.reactRightMessage(message, resultEmbded);
 }
 
-if(process.argv.length > 2)
-{
-	let time = parseFloat(process.argv[2]);
-	setTimeout(connect, time * 1000.0);
-}
-else
-{
-	connect();
-}
+client.login(token);
