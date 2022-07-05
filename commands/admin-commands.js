@@ -103,9 +103,28 @@ allCommands.push({
 					)
 			),
 
-	async execute(interaction, dataManager) {
+	async execute(interaction, dataManager) 
+	{
 		let subcommand = interaction.options.getSubcommand();
 		userFunctions[subcommand](interaction, dataManager);
+	}
+});
+
+allCommands.push({
+    data: new SlashCommandBuilder()
+			.setName('generatelink')
+			.setDescription('Add new unique invite link')
+			.addChannelOption(option =>
+				option
+					.setName("channel")
+					.setDescription("Channel to invite")
+					.setRequired(true)
+				),
+	async execute(interaction, dataManager) 
+	{
+		let channel = interaction.options.getChannel('channel');
+		let invite = await channel.createInvite({maxUses: 1, unique: true});
+		await interaction.reply("Invation link : https://discord.gg/" + invite);
 	}
 });
 

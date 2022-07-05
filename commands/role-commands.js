@@ -35,6 +35,7 @@ allCommands.push({
                     .setRequired(true)
             ),
 
+	everyonePermission: true,
     needRefreshCommands : true,
 
     async execute(interaction, dataManager) {

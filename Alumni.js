@@ -10,7 +10,7 @@ const DataManager = require('./scripts/data-manager.js');
 const AlumniCheck = require('./scripts/alumni-check.js');
 const { clientId, token } = require('./config.json');
 
-const needRefreshCommands = false;
+const needRefreshCommands = true;
 
 const guildValues = 
 [
@@ -149,13 +149,36 @@ async function refreshCommandForGuild(guild)
 
 async function addCommandPermissionsForGuild(guild)
 {
+	return;
+
 	await guild.commands.fetch();
 
 	let guildData = DataManager.getServerData(guild.id);
 
 	for(let[commandId, command] of guild.commands.cache)
 	{
+		const interneCommand = client.commands.get(command.name);
+
+		if (!interneCommand)
+		{
+			continue;
+		}
+
 		command.defaultPermission = false;
+
+		if(('everyonePermission' in interneCommand) && (interneCommand.everyonePermission))
+		{
+			await command.permissions.set({permissions: 
+			[
+				{
+					id: guild.roles.everyone.id,
+					type: 'ROLE',
+					permission: true
+				}
+			]});
+
+			continue;
+		}
 
 		if(guildData.botManagerRole != -1)
 		{
@@ -168,20 +191,6 @@ async function addCommandPermissionsForGuild(guild)
 				},
 				{
 					id: guildData.botManagerRole,
-					type: 'ROLE',
-					permission: true
-				}
-			]});
-
-			continue;
-		}
-
-		if(command.name == 'role-bot-manager')
-		{
-			await command.permissions.set({permissions: 
-			[
-				{
-					id: guild.roles.everyone.id,
 					type: 'ROLE',
 					permission: true
 				}
