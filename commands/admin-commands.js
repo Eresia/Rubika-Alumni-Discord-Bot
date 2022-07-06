@@ -1,94 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const DiscordUtils = require('../scripts/discord-utils.js');
-const AlumniCheck = require('../scripts/alumni-check.js');
 
 let allCommands = [];
-
-async function registerUser(interaction, dataManager)
-{
-	let user = interaction.options.getUser('user');
-	let school = interaction.options.getString('school');
-	let pseudo = interaction.options.getString('display-name');
-
-	if(await AlumniCheck.registerMember(dataManager, interaction.guild, user, pseudo))
-	{
-		await AlumniCheck.setMemberSchool(dataManager, user, interaction.guild, school);
-		await interaction.reply('Register ' + DiscordUtils.getUserStringById(user.id));
-	}
-	else
-	{
-		await interaction.reply(await interaction.reply({ content: 'Can\'t register ' + DiscordUtils.getUserStringById(user.id), ephemeral: true }));
-	}
-}
-
-async function removeUser(interaction, dataManager)
-{
-	let user = interaction.options.getUser('user');
-
-	if(await AlumniCheck.removeMember(dataManager, interaction.guild, user))
-	{
-		await interaction.reply('Remove ' + DiscordUtils.getUserStringById(user.id) + ' (' + user.tag + ')');
-	}
-	else
-	{
-		await interaction.reply(await interaction.reply({ content: 'Can\'t remove ' + DiscordUtils.getUserStringById(user.id) + ' (' + user.tag + ')', ephemeral: true }));
-	}
-}
-
-const userFunctions = 
-{
-	'register': registerUser,
-	'remove': removeUser
-}
-
-allCommands.push({
-	data: new SlashCommandBuilder()
-			.setName('user')
-			.setDescription('User gestion')
-			.addSubcommand(subcommand =>
-				subcommand
-					.setName('register')
-				.setDescription('Register user with informations')
-				.addUserOption(option =>
-					option
-						.setName('user')
-						.setDescription('The user')
-						.setRequired(true)
-				)
-				.addStringOption(option =>
-					option
-						.setName('school')
-						.setDescription('Which speciality')
-						.setRequired(true)
-						.addChoice('Animation', 'COM')
-						.addChoice('Design', 'ISD')
-						.addChoice('Game', 'GAME')
-				)
-				.addStringOption(option =>
-					option
-						.setName('display-name')
-						.setDescription('If the user need a rename')
-						.setRequired(false)
-				)
-			)
-			.addSubcommand(subcommand =>
-				subcommand
-					.setName('remove')
-					.setDescription('Remove user informations')
-					.addUserOption(option =>
-						option
-							.setName('user')
-							.setDescription('The user')
-							.setRequired(true)
-					)
-			),
-
-	async execute(interaction, dataManager) 
-	{
-		let subcommand = interaction.options.getSubcommand();
-		userFunctions[subcommand](interaction, dataManager);
-	}
-});
 
 allCommands.push({
     data: new SlashCommandBuilder()
@@ -102,9 +15,77 @@ allCommands.push({
 				),
 	async execute(interaction, dataManager) 
 	{
+		if(!interaction.member.permissions.has("ADMINISTRATOR"))
+		{
+			if(!DiscordUtils.hasMemberRole(interaction.member, dataManager.getServerData(interaction.guild.id).botManagerRole))
+			{
+				await interaction.reply({ content: 'You don\'t have permission for this command', ephemeral: true });
+				return;
+			}
+		}
+
 		let channel = interaction.options.getChannel('channel');
 		let invite = await channel.createInvite({maxUses: 1, unique: true});
 		await interaction.reply("Invation link : https://discord.gg/" + invite);
+	}
+});
+
+allCommands.push({
+    data: new SlashCommandBuilder()
+			.setName('set-sheet-informations')
+			.setDescription('Set Google Sheet Informations for user data')
+			.addStringOption(option =>
+				option
+					.setName("link")
+					.setDescription("Google Sheet specific link (ex : \"1h0RfDCZzkDED0mIHt9b81x5BpoTMTjYc9xwaF4jtoPo\")")
+					.setRequired(true)
+				)
+			.addStringOption(option =>
+				option
+					.setName("page")
+					.setDescription("Page name of Google Sheet (ex : \"Answer Page\")")
+					.setRequired(true)
+				)
+			.addStringOption(option =>
+				option
+					.setName("range-min")
+					.setDescription("Range min of page to use (ex : A1)")
+					.setRequired(true)
+				)
+			.addStringOption(option =>
+				option
+					.setName("range-max")
+					.setDescription("Range min of page to use (ex : S2000)")
+					.setRequired(true)
+				),
+
+	async execute(interaction, dataManager) 
+	{
+		if(!interaction.member.permissions.has("ADMINISTRATOR"))
+		{
+			if(!DiscordUtils.hasMemberRole(interaction.member, dataManager.getServerData(interaction.guild.id).botManagerRole))
+			{
+				await interaction.reply({ content: 'You don\'t have permission for this command', ephemeral: true });
+				return;
+			}
+		}
+		
+		let link = interaction.options.getString('link');
+		let page = interaction.options.getString('page');
+		let rangeMin = interaction.options.getString('range-min');
+		let rangeMax = interaction.options.getString('range-max');
+
+		let guildData = dataManager.getServerData(interaction.guild.id);
+
+		guildData.sheetInformations.link = link;
+		guildData.sheetInformations.page = page;
+		guildData.sheetInformations.rangeMin = rangeMin;
+		guildData.sheetInformations.rangeMax = rangeMax;
+		dataManager.writeInData(interaction.guild.id);
+
+		dataManager.AlumniCheck.initUserData(dataManager, interaction.guild);
+
+		interaction.reply("Google Sheet information set");
 	}
 });
 

@@ -3,25 +3,25 @@ const fs = require('fs');
 const { Client, Collection, Intents } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const DiscordUtils = require('./scripts/discord-utils.js');
 const LogMessage = require('./scripts/log.js').logMessage;
 const AdminText = require('./scripts/admin-text.js');
 const DataManager = require('./scripts/data-manager.js');
 const AlumniCheck = require('./scripts/alumni-check.js');
 const { clientId, token } = require('./config.json');
 
-const needRefreshCommands = true;
+const needRefreshCommands = false;
 
 const guildValues = 
 [
 	{name : 'botManagerRole', defaultValue : -1},
-	{name : 'invalidRole', defaultValue : -1},
-	{name : 'validRole', defaultValue : -1},
 	{name : 'gameRole', defaultValue : -1},
 	{name : 'animationRole', defaultValue : -1},
 	{name : 'designRole', defaultValue : -1},
 	{name : 'ambassadorRole', defaultValue : -1},
-	{name : 'botEventRole', defaultValue : -1}
+	{name : 'botEventRole', defaultValue : -1},
+	{name : 'inviteChannel', defaultValue : -1},
+	{name : 'validMemberChannel', defaultValue : -1},
+	{name : 'sheetInformations', defaultValue : {}}
 ];
 
 const invites = new Collection();
@@ -53,6 +53,7 @@ for (const file of commandFiles) {
 }
 
 DataManager.initData(path.join(__dirname, 'data'), guildValues);
+DataManager.AlumniCheck = AlumniCheck;
 
 client.on('ready', async function () {
 	LogMessage("Je suis connecté !", 2);
@@ -60,8 +61,6 @@ client.on('ready', async function () {
 	if (!client.application?.owner) await client.application?.fetch();
 
 	await refreshCommands();
-
-	//checkInvalidRoles(client);
 
 	client.on('interactionCreate', async function(interaction)
 	{
@@ -80,10 +79,6 @@ client.on('ready', async function () {
 		try {
 			await command.execute(interaction, DataManager);
 
-			if('needRefreshCommands' in command && command.needRefreshCommands)
-			{
-				addCommandPermissionsForGuild(interaction.guild);
-			}
 		} catch (error) {
 			console.error(error);
 			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
@@ -157,6 +152,9 @@ client.on('ready', async function () {
 	client.guilds.cache.forEach(async (guild) => {
 		let firstInvites = await guild.invites.fetch();
 		invites.set(guild.id, new Collection(firstInvites.map((invite) => [invite.code, {maxUses: invite.maxUses, inviterId: invite.inviter.id}])));
+		AlumniCheck.init(DataManager, guild);
+		AlumniCheck.initValidationCollector(DataManager, guild);
+		AlumniCheck.initUserData(DataManager, guild);
 	});
 });
 
@@ -178,73 +176,6 @@ async function refreshCommandForGuild(guild)
 {
 	await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
 	console.log('Successfully registered application commands for guild ' + guild.name);
-
-	addCommandPermissionsForGuild(guild);
-}
-
-async function addCommandPermissionsForGuild(guild)
-{
-	return;
-
-	await guild.commands.fetch();
-
-	let guildData = DataManager.getServerData(guild.id);
-
-	for(let[commandId, command] of guild.commands.cache)
-	{
-		const interneCommand = client.commands.get(command.name);
-
-		if (!interneCommand)
-		{
-			continue;
-		}
-
-		command.defaultPermission = false;
-
-		if(('everyonePermission' in interneCommand) && (interneCommand.everyonePermission))
-		{
-			await command.permissions.set({permissions: 
-			[
-				{
-					id: guild.roles.everyone.id,
-					type: 'ROLE',
-					permission: true
-				}
-			]});
-
-			continue;
-		}
-
-		if(guildData.botManagerRole != -1)
-		{
-			await command.permissions.set({permissions: 
-			[
-				{
-					id: guild.roles.everyone.id,
-					type: 'ROLE',
-					permission: false
-				},
-				{
-					id: guildData.botManagerRole,
-					type: 'ROLE',
-					permission: true
-				}
-			]});
-
-			continue;
-		}
-
-		await command.permissions.set({permissions: 
-		[
-			{
-				id: guild.roles.everyone.id,
-				type: 'ROLE',
-				permission: false
-			}
-		]});
-	}
-
-	console.log('Successfully set command permissions for guild ' + guild.name);
 }
 
 client.login(token);

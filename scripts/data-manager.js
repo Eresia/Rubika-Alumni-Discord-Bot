@@ -5,74 +5,74 @@ let data = {}
 let guildDefaultValues = [];
 
 function getServerData(guildId) {
-    if(guildId in data)
-    {
-        return data[guildId];
-    }
+	if(guildId in data)
+	{
+		return data[guildId];
+	}
 
-    return null;
+	return null;
 }
 
 function initData(dirName, defaultValues, callBack = null)
 {
-    directoryPath = dirName;
-    fs.mkdirSync(directoryPath, { recursive: true });
+	directoryPath = dirName;
+	fs.mkdirSync(directoryPath, { recursive: true });
 
-    let directoryFiles = fs.readdirSync(directoryPath);
-    directoryFiles.forEach(function (file) {
-        let contents = fs.readFileSync(directoryPath + '/' + file, 'utf8');
-        let temp = JSON.parse(contents);
-        data[temp.guildId] = temp;
+	let directoryFiles = fs.readdirSync(directoryPath);
+	directoryFiles.forEach(function (file) {
+		let contents = fs.readFileSync(directoryPath + '/' + file, 'utf8');
+		let temp = JSON.parse(contents);
+		data[temp.guildId] = temp;
 
-        if(callBack != null)
-        {
-            callBack(getServerData(temp.guildId), temp.guildId);
-        }
-    });
+		if(callBack != null)
+		{
+			callBack(getServerData(temp.guildId), temp.guildId);
+		}
+	});
 
-    guildDefaultValues = defaultValues;
+	guildDefaultValues = defaultValues;
 }
 
 function initGuildValue(guildId, valueName, initValue)
 {
-    if(!(valueName in data[guildId]))
-    {
-        data[guildId][valueName] = initValue;
-        writeInData(guildId);
-    }
+	if(!(valueName in data[guildId]))
+	{
+		data[guildId][valueName] = initValue;
+		writeInData(guildId);
+	}
 }
 
 
 function initGuildData(guildId)
 {
-    if(!(guildId in data))
+	if(!(guildId in data))
 	{
 		data[guildId] = {};
 	}
 
-    data[guildId].guildId = guildId;
+	data[guildId].guildId = guildId;
 
-    guildDefaultValues.forEach(value => {
-        initGuildValue(guildId, value.name, value.defaultValue);
-    });
+	guildDefaultValues.forEach(value => {
+		initGuildValue(guildId, value.name, value.defaultValue);
+	});
 
-    writeInData(guildId);
+	writeInData(guildId);
 }
 
 function removeGuildData(guildId)
 {
-    if(!(guildId in data))
+	if(!(guildId in data))
 	{
 		return;
 	}
 
-    let path = directoryPath + '/' + guildId;
+	let path = directoryPath + '/' + guildId;
 	if(!fs.existsSync(path))
 	{
 		return;
 	}
 
-    fs.unlinkSync(path);
+	fs.unlinkSync(path);
 }
 
 function writeInData(guildId)
@@ -93,30 +93,11 @@ function writeInAllData()
 	});
 }
 
-function setAnyIntegerValue(valueName, guildId, value)
-{
-    initGuildData(guildId);
-
-    if( data[guildId][valueName] == value )
-    {
-        data[guildId][valueName] = -1;
-        writeInData(guildId);
-        return false;
-    }
-    else
-    {
-        data[guildId][valueName] = value;
-        writeInData(guildId);
-        return true;
-    }
-}
-
 module.exports = {
-    getServerData,
-    initData,
-    initGuildData,
-    removeGuildData,
-    writeInData,
-    writeInAllData,
-    setAnyIntegerValue
+	getServerData,
+	initData,
+	initGuildData,
+	removeGuildData,
+	writeInData,
+	writeInAllData
 }

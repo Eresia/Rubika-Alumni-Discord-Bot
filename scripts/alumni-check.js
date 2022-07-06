@@ -1,33 +1,47 @@
+const { MessageEmbed } = require('discord.js');
+
+const SheetManager = require('./sheet.js');
+const DiscordUtils = require('./discord-utils.js');
+const MailManager =  require('./mail-manager.js')
+
 const { MessageActionRow, MessageButton } = require('discord.js');
 
-const chooseLangage = 
+const timeBeetweenSheetRefresh = 10000;
+
+const mailSubject =
 {
-	FR : 'Bonjour ! Pouvez vous sélectionner le drapeau correspondant à la langue que vous souhaitez utiliser ?', 
-	EN : 'Hello ! Can you click on the flag of the language you want to use?'
+	FR: "Lien d'invitation sur le Discord Rubika Alumni",
+	EN: "Invite Link for Rubika Alumni Discord"
+}
+
+const mailText =
+{
+	FR: "Bienvenue sur le discord, voici votre lien d'invitation unique : %%L",
+	EN: "Welcome to the Discord, this is your unique invitation link: %%L"
 }
 
 const canUseName = 
 {
-	FR : 'Pour faciliter la reconnaissance de tout le monde, nous souhaiterions modifier votre pseudo sur le serveur sous la forme "Prénom Nom" (%%N). Êtes vous d\'accord ?', 
-	EN : 'To your pseudo, we advise to use the form "First-Name Last-Name" (%%N) so that everyone can recognize each other. Can we change it for you?'
+	FR: 'Bonjour. Pour faciliter la reconnaissance de tout le monde, nous souhaiterions modifier votre pseudo sur le serveur sous la forme "Prénom Nom" (%%N). Êtes vous d\'accord ?', 
+	EN: 'Hello. To your pseudo, we advise to use the form "First-Name Last-Name" (%%N) so that everyone can recognize each other. Can we change it for you?'
 }
 
 const confirmName = 
 {
-	FR : 'J\'accepte d\'être renommé·e %%N',
-	EN : 'I accept to be rename %%N'
+	FR: 'J\'accepte d\'être renommé·e %%N',
+	EN: 'I accept to be rename %%N'
 }
 
 const declineName = 
 {
-	FR : 'Je souhaite utiliser un autre pseudo',
-	EN : 'I want to use another pseudo'
+	FR: 'Je souhaite utiliser un autre pseudo',
+	EN: 'I want to use another pseudo'
 }
 
 const askName = 
 {
-	FR : 'Pouvez vous m\'indiquer de quelle manière voudriez vous êtes nommé dans le serveur ?',
-	EN : 'Can you give me under what name would you be called in the server?'
+	FR: 'Pouvez vous m\'indiquer de quelle manière voudriez vous êtes nommé dans le serveur ?',
+	EN: 'Can you give me under what name would you be called in the server?'
 }
 
 const confirmMessage = 
@@ -49,42 +63,187 @@ const confirmMessage =
 	+ 'Have a nice day and welcome!'
 }
 
-const removeAllDmMessage = false;
+let userData = [];
+let actualUserDataTimeout = null;
+let actualValidationCollector = null;
 
-async function registerMember(dataManager, guild, user, name)
+async function init(dataManager, guild)
 {
-	let guildData = dataManager.getServerData(guild.id);
-
-	// if(guildData.invalidRole == -1 || guildData.validRole == -1)
-	// {
-	// 	return false;
-	// }
-
-	let guildMember = await guild.members.fetch(user.id);
-
-	//guildMember.roles.remove(guildData.invalidRole);
-
-	//guildMember.roles.add(guildData.validRole);
-
-	try {
-		await guildMember.setNickname(name);
-	} catch(err) {
-		console.log("Can't change nickname of " + user.tag);
-	}
-
-	return true;
+	MailManager.initEmailManager();
 }
 
-async function setMemberSchool(dataManager, user, guild, school)
+async function initValidationCollector(dataManager, guild)
 {
 	let guildData = dataManager.getServerData(guild.id);
+
+	if(actualValidationCollector != null)
+	{
+		actualValidationCollector.stop();
+		actualValidationCollector = null;
+	}
+
+	if(guildData.validMemberChannel == -1)
+	{
+		return;
+	}
+
+	let validMemberChannel = DiscordUtils.getChannelById(guild.client, guildData.validMemberChannel);
+
+	if(validMemberChannel == null)
+	{
+		return;
+	}
+
+	const validationFilter = function(button){return ((button.customId === 'validate' || button.customId === 'reject'))};
+	const validationCollector = validMemberChannel.createMessageComponentCollector({ filter: validationFilter, max: 0 });
+
+	validationCollector.on('collect', function(button)
+	{
+		if(!button.isButton())
+		{
+			return;
+		}
+
+		if((button.customId != 'validate') && (button.customId != 'reject'))
+		{
+			return;
+		}
+
+		let userIndex = -1;
+
+		for(let i = 0; i < userData.length; i++)
+		{
+			if(userData[i].message == button.message.id)
+			{
+				userIndex = i;
+				break;
+			}
+		}
+
+		if(userIndex == -1)
+		{
+			validMemberChannel.send("Can't find user data from message " + button.message.id);
+			return;
+		}
+
+		let validate = (button.customId == 'validate') ? true : false;
+
+		userData[userIndex].verified = 'Oui';
+		userData[userIndex].status = validate ? 'Membre' : 'Refusé';
+
+		SheetManager.updateUserVerification(guildData.sheetInformations, userData[userIndex]);
+
+		let tag = button.message.embeds[0].description.split('\n')[0].substring(6);
+
+		button.update({ embeds: [createResumeInviteEmbed(userData[userIndex], tag)], components: [] });
+	});
+
+	actualValidationCollector = validationCollector;
+}
+
+async function initUserData(dataManager, guild)
+{
+	let guildData = dataManager.getServerData(guild.id);
+
+	if(actualUserDataTimeout != null)
+	{
+		clearInterval(actualUserDataTimeout);
+		actualUserDataTimeout = null;
+	}
+
+	if(!("link" in guildData.sheetInformations) || !("page" in guildData.sheetInformations) || !("rangeMin" in guildData.sheetInformations) || !("rangeMax" in guildData.sheetInformations))
+	{
+		return;
+	}
+
+	userData = await SheetManager.getActualFormResults(guildData.sheetInformations);
+
+	actualUserDataTimeout = setInterval(function(){checkNewUsers(dataManager, guild);}, timeBeetweenSheetRefresh);
+
+	console.log("Sheet initialisation successfull");
+}
+
+async function checkNewUsers(dataManager, guild)
+{
+	let guildData = dataManager.getServerData(guild.id);
+
+	if(guildData.inviteChannel == -1 || guildData.validMemberChannel == -1)
+	{
+		return;
+	}
+
+	let validMemberChannel = DiscordUtils.getChannelById(guild.client, guildData.validMemberChannel);
+
+	if(validMemberChannel == null)
+	{
+		return;
+	}
+
+	let validationButtons = new MessageActionRow()
+		.addComponents([
+			new MessageButton()
+				.setCustomId('validate')
+				.setLabel('Valider')
+				.setStyle('PRIMARY'),
+
+			new MessageButton()
+				.setCustomId('reject')
+				.setLabel('Refuser')
+				.setStyle('PRIMARY'),
+		]);
+
+	let newUserData = await SheetManager.getActualFormResults(guildData.sheetInformations);
+
+	for(let i = userData.length; i < newUserData.length; i++)
+	{
+		if(newUserData[i].send != "En Attente")
+		{
+			continue;
+		}
+
+		newUserData[i].verified = "Non";
+		newUserData[i].status = "En Attente";
+
+		let langage = (newUserData[i].langage == "Français") ? "FR" : "EN";
+
+		let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
+		let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
+		newUserData[i].invite = 'https://discord.gg/' + invite.code;
+
+		let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
+
+		if(emailError == null)
+		{
+			newUserData[i].send = "Envoyé";
+		}
+		else
+		{
+			newUserData[i].send = "Erreur";
+		}
+
+		let newMessage = await validMemberChannel.send({ embeds: [createResumeInviteEmbed(newUserData[i], "Pas sur le discord")], components: [validationButtons] });
+		newUserData[i].message = newMessage.id;
+
+		if(emailError != null)
+		{
+			await validMemberChannel.send("Error with sending email : " + emailError);
+		}
+
+		SheetManager.updateUserVerification(guildData.sheetInformations, newUserData[i]);
+		SheetManager.updateUserLinks(guildData.sheetInformations, newUserData[i]);
+	}
+
+	userData = newUserData;
+}
+
+function setMemberSchool(dataManager, guildMember, school)
+{
+	let guildData = dataManager.getServerData(guildMember.guild.id);
 
 	if(guildData.gameRole == -1 || guildData.animationRole == -1 || guildData.designRole == -1)
 	{
 		return;
 	}
-
-	let guildMember = await guild.members.fetch(user.id);
 
 	switch(school)
 	{
@@ -92,44 +251,17 @@ async function setMemberSchool(dataManager, user, guild, school)
 			guildMember.roles.add(guildData.gameRole);
 			break;
 
-		case 'COM':
+		case 'ANIM':
 			guildMember.roles.add(guildData.animationRole);
 			break;
 
-		case 'ISD':
+		case 'DESIGN':
 			guildMember.roles.add(guildData.designRole);
 			break;
 	}
 }
 
-async function removeMember(dataManager, guild, user)
-{
-	let guildData = dataManager.getServerData(guild.id);
-
-	if(guildData.invalidRole == -1 || guildData.validRole == -1 || guildData.gameRole == -1 || guildData.animationRole == -1 || guildData.designRole == -1)
-	{
-		return false;
-	}
-
-	let guildMember = await guild.members.fetch(user.id);
-
-	await guildMember.roles.remove(guildData.validRole);
-	await guildMember.roles.remove(guildData.gameRole);
-	await guildMember.roles.remove(guildData.animationRole);
-	await guildMember.roles.remove(guildData.designRole);
-
-	await guildMember.roles.add(guildData.invalidRole);
-
-	try {
-		await guildMember.setNickname(null);
-	} catch(err) {
-		console.log("Can't change nickname of " + user.tag);
-	}
-
-	return true;
-}
-
-async function askMemberInformations(client, dataManager, invitePromise, guild, guildMember, firstMessage = true)
+async function askMemberInformations(client, dataManager, invitePromise, guild, guildMember)
 {
 	let user = guildMember.user;
 
@@ -140,7 +272,14 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	let guildData = dataManager.getServerData(guild.id);
 
-	if(guildData.invalidRole == -1 || guildData.validRole == -1 || guildData.gameRole == -1 || guildData.animationRole == -1 || guildData.designRole == -1)
+	if(guildData.validMemberChannel == -1)
+	{
+		return;
+	}
+
+	let validMemberChannel = DiscordUtils.getChannelById(guild.client, guildData.validMemberChannel);
+
+	if(validMemberChannel == null)
 	{
 		return;
 	}
@@ -149,52 +288,54 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	if(inviteCode == undefined)
 	{
-		console.log("Can't find invite for user " + user.tag);
+		validMemberChannel.send("Can't find invite for user " + user.tag);
 		return;
 	}
 
-	console.log("Invite link : " + inviteCode);
+	inviteCode = 'https://discord.gg/' + inviteCode;
 
-	return;
+	let userInfos = null;
 
-	let dmChannel = await guildMember.createDM();
-	let channelMessages = await dmChannel.messages.fetch();
-
-	if(removeAllDmMessage)
+	for(let i = 0; i < userData.length; i++)
 	{
-		for(let i = 0; i < channelMessages.size; i++)
+		if(userData[i].invite == inviteCode)
 		{
-			let message = channelMessages.at(i);
-			if(message.author.id == client.user.id)
-			{
-				await message.delete();
-			}
+			userInfos = userData[i];
 		}
-
-		firstMessage = true;
 	}
 
-	let langageRow = new MessageActionRow()
-						.addComponents([
-							new MessageButton()
-								.setCustomId('FR')
-								.setLabel('Français')
-								.setEmoji('🇫🇷')
-								.setStyle('PRIMARY'),
+	if(userInfos == null)
+	{
+		validMemberChannel.send("Can't find data for user " + user.tag);
+		return;
+	}
 
-							new MessageButton()
-								.setCustomId('EN')
-								.setLabel('English')
-								.setEmoji('🇬🇧')
-								.setStyle('PRIMARY'),
-						]);
+	let fullName = userInfos.firstName + ' ' + userInfos.name;
 
-	let langage = "EN";
+	setMemberSchool(dataManager, guildMember, userInfos.school);
 
-	const langageFilter = function(button){return ((button.customId === 'FR' || button.customId === 'EN'))};
-	const langageCollector = dmChannel.createMessageComponentCollector({ filter: langageFilter, max: 1 });
+	let validMessage = await DiscordUtils.getMessageById(client, validMemberChannel.id, userInfos.message);
 
-	const canUseNameFilter = function(button){return ((button.customId === 'COM' || button.customId === 'ISD' || button.customId === 'GAME'))};
+	validMessage.edit({ embeds: [createResumeInviteEmbed(userInfos, user.tag)], components: validMessage.components });
+
+	let dmChannel = await guildMember.createDM();
+
+	let langage = (userInfos.langage == "Français") ? "FR" : "EN";
+
+	let nameRow = new MessageActionRow()
+		.addComponents([
+			new MessageButton()
+				.setCustomId('YES')
+				.setLabel(confirmName[langage].replace('%%N', fullName))
+				.setStyle('PRIMARY'),
+
+			new MessageButton()
+				.setCustomId('NO')
+				.setLabel(declineName[langage])
+				.setStyle('PRIMARY')
+		]);
+
+	const canUseNameFilter = function(button){return ((button.customId === 'YES' || button.customId === 'NO'))};
 	const canUseNameCollector = dmChannel.createMessageComponentCollector({ filter: canUseNameFilter, max: 1 });
 
 	const pseudoFilter = function(message){return (!message.author.bot);};
@@ -211,15 +352,26 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	let collectPseudo = async function(message)
 	{
-		await registerMember(dataManager, guild, user, message.content);
+		try {
+			await guildMember.setNickname(message.content);
+		} catch(err) {
+			console.log("Can't change nickname of " + user.tag);
+		}
+
 		dmChannel.send(introString + confirmMessage[langage]);
 	}
 
 	let collectCanUseName = async function(button)
 	{
-		if(button.customId == 'Yes')
+		if(button.customId == 'YES')
 		{
-			dmChannel.send(introString + confirmMessage[langage]);
+			try {
+				await guildMember.setNickname(fullName);
+			} catch(err) {
+				console.log("Can't change nickname of " + user.tag);
+			}
+
+			await button.update({content: introString + confirmMessage[langage], components: []});
 		}
 		else
 		{
@@ -230,95 +382,15 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 			}
 			catch(error)
 			{
-				console.error(error);
+				console.log(error);
 			}
-		}
-	}
-
-	let collectLangage = async function(button)
-	{
-		langage = button.customId;
-
-		let nameRow = new MessageActionRow()
-						.addComponents([
-							new MessageButton()
-								.setCustomId('Yes')
-								.setLabel(confirmName[langage])
-								.setStyle('PRIMARY'),
-
-							new MessageButton()
-								.setCustomId('No')
-								.setLabel(declineName[langage])
-								.setStyle('PRIMARY')
-						]);
-
-		try
-		{
-			canUseNameCollector.on('collect', collectCanUseName);
-			await button.update({content: introString + canUseName[langage], components: [nameRow] });
-		}
-		catch(error)
-		{
-			console.error(error);
 		}
 	}
 
 	try
 	{
-		if(firstMessage || (channelMessages.size == 0))
-		{
-			await dmChannel.send({content: introString + createBilingueMessage(chooseLangage), components: [langageRow] });
-			langageCollector.on('collect', collectLangage);
-		}
-		else
-		{
-			let hasSelfMessage = false;
-
-			for(let i = 0; i < channelMessages.size; i++)
-			{
-				let message = channelMessages.at(i);
-				if(message.author.id == client.user.id)
-				{
-					hasSelfMessage = true;
-
-					switch(message.content.substring(introString.length))
-					{
-						case createBilingueMessage(chooseLangage):
-							langageCollector.on('collect', collectLangage);
-							break;
-
-						case askSchool.FR:
-							langage = 'FR';
-							canUseNameCollector.on('collect', collectCanUseName);
-							break;
-
-						case askSchool.EN:
-							langage = 'EN';
-							canUseNameCollector.on('collect', collectCanUseName);
-							break;
-
-						case askName.FR:
-							langage = 'FR';
-							pseudoCollector.on('collect', collectPseudo);
-							break;
-
-						case askName.EN:
-							langage = 'EN';
-							pseudoCollector.on('collect', collectPseudo);
-							break;
-					}
-
-					break;
-				}
-			}
-
-			if(!hasSelfMessage)
-			{
-				await dmChannel.send({content: introString + createBilingueMessage(chooseLangage), components: [langageRow] });
-				langageCollector.on('collect', collectLangage);
-			}
-		}
-		
+		await dmChannel.send({content: introString + canUseName[langage].replace('%%N', fullName), components: [nameRow] });
+		canUseNameCollector.on('collect', collectCanUseName);
 	}
 	catch(error)
 	{
@@ -326,10 +398,28 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 	}
 }
 
-module.exports = {
-	registerMember,
-	setMemberSchool,
-	removeMember,
+function createResumeInviteEmbed(userData, pseudo)
+{
+	let result = new MessageEmbed();
+
+	result.title = userData.firstName + ' ' + userData.name;
+
+	result.description = 'Tag : ' + pseudo + '\n';
+	result.description += "Vérifié : " + userData.verified + '\n';
+	result.description += "Statut : " + userData.status + '\n';
+	result.description += "Filière : " + userData.school + '\n\n';
+	result.description += "Lien d'invitation : " + userData.invite + '\n\n';
+
+	result.description += "Statut Email : " + userData.send + '\n';
+
+	return result;
+}
+
+module.exports = 
+{
+	init,
+	initValidationCollector,
+	initUserData,
 	askMemberInformations
 }
 
