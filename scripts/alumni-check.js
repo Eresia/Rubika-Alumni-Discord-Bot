@@ -2,20 +2,32 @@ const { MessageActionRow, MessageButton } = require('discord.js');
 
 const chooseLangage = 
 {
-	FR : 'Pouvez vous sélectionner le drapeau correspondant à la langue que vous souhaitez utiliser ?', 
-	EN : 'Can you click on the flag of the language you want to use?'
+	FR : 'Bonjour ! Pouvez vous sélectionner le drapeau correspondant à la langue que vous souhaitez utiliser ?', 
+	EN : 'Hello ! Can you click on the flag of the language you want to use?'
 }
 
-const askSchool = 
+const canUseName = 
 {
-	FR : 'Pouvez vous m\'indiquer de quelle formation êtes vous ?', 
-	EN : 'Can you give me your cursus?'
+	FR : 'Pour faciliter la reconnaissance de tout le monde, nous souhaiterions modifier votre pseudo sur le serveur sous la forme "Prénom Nom" (%%N). Êtes vous d\'accord ?', 
+	EN : 'To your pseudo, we advise to use the form "First-Name Last-Name" (%%N) so that everyone can recognize each other. Can we change it for you?'
+}
+
+const confirmName = 
+{
+	FR : 'J\'accepte d\'être renommé·e %%N',
+	EN : 'I accept to be rename %%N'
+}
+
+const declineName = 
+{
+	FR : 'Je souhaite utiliser un autre pseudo',
+	EN : 'I want to use another pseudo'
 }
 
 const askName = 
 {
-	FR : 'Pouvez vous également m\'indiquer de quelle manière voudriez vous êtes nommé dans le serveur ? Nous conseillons la forme "Prénom Nom" afin que tout le monde puisse se reconnaitre.',
-	EN : 'Can you give me under what name would you be called in the server? We advise to use the form "First-Name Last-Name so that everyone can recognize each other.'
+	FR : 'Pouvez vous m\'indiquer de quelle manière voudriez vous êtes nommé dans le serveur ?',
+	EN : 'Can you give me under what name would you be called in the server?'
 }
 
 const confirmMessage = 
@@ -43,16 +55,16 @@ async function registerMember(dataManager, guild, user, name)
 {
 	let guildData = dataManager.getServerData(guild.id);
 
-	if(guildData.invalidRole == -1 || guildData.validRole == -1 || guildData.gameRole == -1 || guildData.animationRole == -1 || guildData.designRole == -1)
-	{
-		return false;
-	}
+	// if(guildData.invalidRole == -1 || guildData.validRole == -1)
+	// {
+	// 	return false;
+	// }
 
 	let guildMember = await guild.members.fetch(user.id);
 
-	guildMember.roles.remove(guildData.invalidRole);
+	//guildMember.roles.remove(guildData.invalidRole);
 
-	guildMember.roles.add(guildData.validRole);
+	//guildMember.roles.add(guildData.validRole);
 
 	try {
 		await guildMember.setNickname(name);
@@ -65,8 +77,14 @@ async function registerMember(dataManager, guild, user, name)
 
 async function setMemberSchool(dataManager, user, guild, school)
 {
-	let guildMember = await guild.members.fetch(user.id);
 	let guildData = dataManager.getServerData(guild.id);
+
+	if(guildData.gameRole == -1 || guildData.animationRole == -1 || guildData.designRole == -1)
+	{
+		return;
+	}
+
+	let guildMember = await guild.members.fetch(user.id);
 
 	switch(school)
 	{
@@ -111,8 +129,10 @@ async function removeMember(dataManager, guild, user)
 	return true;
 }
 
-async function askMemberInformations(client, dataManager, guild, user, firstMessage = true)
+async function askMemberInformations(client, dataManager, invitePromise, guild, guildMember, firstMessage = true)
 {
+	let user = guildMember.user;
+
 	if(user.bot)
 	{
 		return;
@@ -125,7 +145,17 @@ async function askMemberInformations(client, dataManager, guild, user, firstMess
 		return;
 	}
 
-	let guildMember = await guild.members.fetch(user.id);
+	let inviteCode = await invitePromise;
+
+	if(inviteCode == undefined)
+	{
+		console.log("Can't find invite for user " + user.tag);
+		return;
+	}
+
+	console.log("Invite link : " + inviteCode);
+
+	return;
 
 	let dmChannel = await guildMember.createDM();
 	let channelMessages = await dmChannel.messages.fetch();
@@ -159,31 +189,13 @@ async function askMemberInformations(client, dataManager, guild, user, firstMess
 								.setStyle('PRIMARY'),
 						]);
 
-	let schoolRow = new MessageActionRow()
-						.addComponents([
-							new MessageButton()
-								.setCustomId('COM')
-								.setLabel('Animation')
-								.setStyle('PRIMARY'),
-
-							new MessageButton()
-								.setCustomId('ISD')
-								.setLabel('Design')
-								.setStyle('PRIMARY'),
-
-							new MessageButton()
-								.setCustomId('GAME')
-								.setLabel('Game')
-								.setStyle('PRIMARY'),
-						]);
-
 	let langage = "EN";
 
 	const langageFilter = function(button){return ((button.customId === 'FR' || button.customId === 'EN'))};
 	const langageCollector = dmChannel.createMessageComponentCollector({ filter: langageFilter, max: 1 });
 
-	const schoolFilter = function(button){return ((button.customId === 'COM' || button.customId === 'ISD' || button.customId === 'GAME'))};
-	const schoolCollector = dmChannel.createMessageComponentCollector({ filter: schoolFilter, max: 1 });
+	const canUseNameFilter = function(button){return ((button.customId === 'COM' || button.customId === 'ISD' || button.customId === 'GAME'))};
+	const canUseNameCollector = dmChannel.createMessageComponentCollector({ filter: canUseNameFilter, max: 1 });
 
 	const pseudoFilter = function(message){return (!message.author.bot);};
 	const pseudoCollector = dmChannel.createMessageCollector({ filter: pseudoFilter, max: 1 });
@@ -203,18 +215,23 @@ async function askMemberInformations(client, dataManager, guild, user, firstMess
 		dmChannel.send(introString + confirmMessage[langage]);
 	}
 
-	let collectSchool = async function(button)
+	let collectCanUseName = async function(button)
 	{
-		await setMemberSchool(dataManager, user, guild, button.customId);
-
-		try
+		if(button.customId == 'Yes')
 		{
-			pseudoCollector.on('collect', collectPseudo);
-			await button.update({content: introString + askName[langage], components: []});
+			dmChannel.send(introString + confirmMessage[langage]);
 		}
-		catch(error)
+		else
 		{
-			console.error(error);
+			try
+			{
+				pseudoCollector.on('collect', collectPseudo);
+				await button.update({content: introString + askName[langage], components: []});
+			}
+			catch(error)
+			{
+				console.error(error);
+			}
 		}
 	}
 
@@ -222,10 +239,23 @@ async function askMemberInformations(client, dataManager, guild, user, firstMess
 	{
 		langage = button.customId;
 
+		let nameRow = new MessageActionRow()
+						.addComponents([
+							new MessageButton()
+								.setCustomId('Yes')
+								.setLabel(confirmName[langage])
+								.setStyle('PRIMARY'),
+
+							new MessageButton()
+								.setCustomId('No')
+								.setLabel(declineName[langage])
+								.setStyle('PRIMARY')
+						]);
+
 		try
 		{
-			schoolCollector.on('collect', collectSchool);
-			await button.update({content: introString + askSchool[langage], components: [schoolRow] });
+			canUseNameCollector.on('collect', collectCanUseName);
+			await button.update({content: introString + canUseName[langage], components: [nameRow] });
 		}
 		catch(error)
 		{
@@ -259,12 +289,12 @@ async function askMemberInformations(client, dataManager, guild, user, firstMess
 
 						case askSchool.FR:
 							langage = 'FR';
-							schoolCollector.on('collect', collectSchool);
+							canUseNameCollector.on('collect', collectCanUseName);
 							break;
 
 						case askSchool.EN:
 							langage = 'EN';
-							schoolCollector.on('collect', collectSchool);
+							canUseNameCollector.on('collect', collectCanUseName);
 							break;
 
 						case askName.FR:

@@ -24,8 +24,18 @@ const guildValues =
 	{name : 'botEventRole', defaultValue : -1}
 ];
 
+const invites = new Collection();
+const inviteResolvers = {}
+
 const rest = new REST({ version: '9' }).setToken(token);
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.DIRECT_MESSAGES ] });
+const client = new Client({ intents: 
+	[
+		Intents.FLAGS.GUILDS, 
+		Intents.FLAGS.GUILD_MESSAGES, 
+		Intents.FLAGS.GUILD_MESSAGE_REACTIONS, 
+		Intents.FLAGS.GUILD_INVITES, 
+		Intents.FLAGS.GUILD_MEMBERS, 
+		Intents.FLAGS.DIRECT_MESSAGES ] });
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -80,49 +90,74 @@ client.on('ready', async function () {
 		}
 	});
 	
-	client.on('guildMemberAdd', function(guildMember)
-	{
-		AlumniCheck.askMemberInformations(client, DataManager, guildMember.guild, guildMember.user);
-	});
+	AdminText.displayDiscordMessages(client);
 
 	client.on('guildCreate', function(guild)
 	{
 		DataManager.initGuildData(guild.id);
 		refreshCommandForGuild(guild);
+
+		guild.invites.fetch().then(guildInvites => {
+			invites.set(guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.maxUses, invite.uses, invite.inviter.id])));
+		})
 	});
 
 	client.on('guildDelete', function(guild)
 	{
 		DataManager.removeGuildData(guild.id);
+
+		invites.delete(guild.id);
+	});
+
+	client.on('guildMemberAdd', function(guildMember)
+	{
+		if(!(guildMember.guild.id in inviteResolvers))
+		{
+			inviteResolvers[guildMember.guild.id] = [];
+		}
+
+		let resolver;
+
+		let promise = new Promise(function(resolve){resolver = resolve;});
+
+		inviteResolvers[guildMember.guild.id].push(resolver);
+
+		AlumniCheck.askMemberInformations(client, DataManager, promise, guildMember.guild, guildMember);
+	});
+
+	client.on("inviteCreate", (invite) => {
+		invites.get(invite.guild.id).set(invite.code, {maxUses: invite.maxUses, inviterId: invite.inviter.id});
+	});
+
+	client.on("inviteDelete", function(invite) {
+		if(!(invite.guild.id in inviteResolvers))
+		{
+			return;
+		}
+
+		if(inviteResolvers[invite.guild.id].length == 0)
+		{
+			return;
+		}
+
+		let guildInvites = invites.get(invite.guild.id);
+		let inviteInfo = guildInvites.get(invite.code);
+
+		if(inviteInfo.maxUses == 1)
+		{
+			let resolver = inviteResolvers[invite.guild.id].shift();
+			resolver(invite.code);
+		}
+
+		guildInvites.delete(invite.code);
 	});
 
 	await client.guilds.fetch();
 
-	for(let i = 0; i < client.guilds.cache.size; i++)
-    {
-        let guild = client.guilds.cache.at(i);
-
-		let guildData = DataManager.getServerData(guild.id);
-
-		if(guildData == null)
-		{
-			continue;
-		}
-		
-		await guild.members.fetch();
-
-		for(let j = 0; j < guild.members.cache.size; j++)
-    	{
-			let guildMember = guild.members.cache.at(j);
-
-			if(DiscordUtils.hasMemberRole(guildMember, guildData.invalidRole))
-			{
-				AlumniCheck.askMemberInformations(client, DataManager, guild, guildMember.user, false);
-			}
-		}
-    }
-
-	AdminText.displayDiscordMessages(client);
+	client.guilds.cache.forEach(async (guild) => {
+		let firstInvites = await guild.invites.fetch();
+		invites.set(guild.id, new Collection(firstInvites.map((invite) => [invite.code, {maxUses: invite.maxUses, inviterId: invite.inviter.id}])));
+	});
 });
 
 async function refreshCommands()
@@ -142,7 +177,7 @@ async function refreshCommands()
 async function refreshCommandForGuild(guild)
 {
 	await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
-    console.log('Successfully registered application commands for guild ' + guild.name);
+	console.log('Successfully registered application commands for guild ' + guild.name);
 
 	addCommandPermissionsForGuild(guild);
 }

@@ -35,19 +35,10 @@ async function removeUser(interaction, dataManager)
 	}
 }
 
-async function askUser(interaction, dataManager)
-{
-	let user = interaction.options.getUser('user');
-
-	await AlumniCheck.askMemberInformations(interaction.client, dataManager, interaction.guild, user);
-	await interaction.reply('Message send to ' + DiscordUtils.getUserStringById(user.id) + ' (' + user.tag + ')');
-}
-
 const userFunctions = 
 {
 	'register': registerUser,
-	'remove': removeUser,
-	'ask-pm': askUser
+	'remove': removeUser
 }
 
 allCommands.push({
@@ -84,17 +75,6 @@ allCommands.push({
 				subcommand
 					.setName('remove')
 					.setDescription('Remove user informations')
-					.addUserOption(option =>
-						option
-							.setName('user')
-							.setDescription('The user')
-							.setRequired(true)
-					)
-			)
-			.addSubcommand(subcommand =>
-				subcommand
-					.setName('ask-pm')
-					.setDescription('Ask user informations in private message')
 					.addUserOption(option =>
 						option
 							.setName('user')
