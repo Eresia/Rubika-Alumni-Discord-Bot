@@ -163,9 +163,9 @@ allCommands.push({
 					.setName('location')
 					.setDescription('Where the city is in the world')
 					.setRequired(true)
-					.addChoice('Europe', 'Europe')
-					.addChoice('North America', 'NA')
-					.addChoice('Asia', 'Asia')
+					.addChoices({name: 'Europe', value: 'Europe'})
+					.addChoices({name: 'North America', value: 'NA'})
+					.addChoices({name: 'Asia', value: 'Asia'})
 			)
 			.addStringOption(option =>
 				option
