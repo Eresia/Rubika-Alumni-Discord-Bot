@@ -1,8 +1,9 @@
 # Discord Bot for Rubika Alumni server
 
+## Configuration files:
 To launch the bot, you need three configuration files :
 
-**config.json**
+### config.json
 ```json
 {
 	"clientId": "your_bot_client_id",
@@ -10,10 +11,10 @@ To launch the bot, you need three configuration files :
 }
 ```
 
-**credentials.json**
+### credentials.json
 Get the file given by Google Cloud console for your application
 
-**mail_user.json** ([Tutorial](https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a))
+### mail_user.json ([Tutorial](https://dev.to/chandrapantachhetri/sending-emails-securely-using-node-js-nodemailer-smtp-gmail-and-oauth2-g3a))
 ```json
 {
 	"user": "email_to_use",
@@ -23,13 +24,14 @@ Get the file given by Google Cloud console for your application
 }
 ```
 
-And juste start with 
+## Launch Bot
+Just start with 
 
-```
+```bash
 node Alumni.js
 ```
 
-## Commands :
+## Commands:
 
 Before use commands, an admin needs to setup bot manager role with:
 
@@ -49,10 +51,10 @@ To set the sheet informations use
 /set-sheet-informations <link> <page> <range-min> <range-max>
 ```
 
-- link : The unique link of google sheet (by example : 1h0RfDCZzkDED0mIHt9b81x5BpoTMTjYc9xwaF4jtoPo if the origine link is https://docs.google.com/spreadsheets/d/1h0RfDCZzkDED0mIHt9b81x5BpoTMTjYc9xwaF4jtoPo)
-- page : The name of the page to use
-- range-min : The min range to use (ex: A1)
-- range-max : The max range to use (ex: S2000)
+- link: The unique link of google sheet (by example: 1h0RfDCZzkDED0mIHt9b81x5BpoTMTjYc9xwaF4jtoPo if the origine link is https://docs.google.com/spreadsheets/d/1h0RfDCZzkDED0mIHt9b81x5BpoTMTjYc9xwaF4jtoPo)
+- page: The name of the page to use
+- range-min: The min range to use (ex: A1)
+- range-max: The max range to use (ex: S2000)
 
 #### Role commands
 
