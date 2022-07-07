@@ -251,16 +251,19 @@ async function checkNewUsers(dataManager, guild)
 			let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
 			newUserData[i].invite = 'https://discord.gg/' + invite.code;
 
-			let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
+			if(newUserData[i].send != "Envoyé" && newUserData[i].send != "Erreur")
+			{
+				let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
 
-			if(emailError == null)
-			{
-				newUserData[i].send = "Envoyé";
-			}
-			else
-			{
-				newUserData[i].send = "Erreur";
-				await validMemberChannel.send("Error with sending email : " + emailError);
+				if(emailError == null)
+				{
+					newUserData[i].send = "Envoyé";
+				}
+				else
+				{
+					newUserData[i].send = "Erreur";
+					await validMemberChannel.send("Error with sending email : " + emailError);
+				}
 			}
 		}
 		else
