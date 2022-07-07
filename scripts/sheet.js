@@ -201,6 +201,11 @@ async function getActualFormResults(sheetInformations)
 		newUser.invite = resultValues[i][sheetKeys.INVITE];
 		newUser.message = resultValues[i][sheetKeys.RESUME_MESSAGE];
 
+		if(newUser.firstName == undefined || newUser.name == undefined)
+		{
+			continue;
+		}
+
 		if(newUser.firstName.length == 0 || newUser.name.length == 0)
 		{
 			continue;

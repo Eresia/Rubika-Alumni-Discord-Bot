@@ -7,6 +7,7 @@ const MailManager =  require('./mail-manager.js')
 const { MessageActionRow, MessageButton } = require('discord.js');
 
 const timeBeetweenSheetRefresh = 10000;
+const sendMailBeforeValidation = false;
 
 const mailSubject =
 {
@@ -97,7 +98,7 @@ async function initValidationCollector(dataManager, guild)
 	const validationFilter = function(button){return ((button.customId === 'validate' || button.customId === 'reject'))};
 	const validationCollector = validMemberChannel.createMessageComponentCollector({ filter: validationFilter, max: 0 });
 
-	validationCollector.on('collect', function(button)
+	validationCollector.on('collect', async function(button)
 	{
 		if(!button.isButton())
 		{
@@ -122,20 +123,58 @@ async function initValidationCollector(dataManager, guild)
 
 		if(userIndex == -1)
 		{
-			validMemberChannel.send("Can't find user data from message " + button.message.id);
+			let embeds = button.message.embeds;
+			embeds[0].description = '**Can\'t find user data from this message**\n\n' + embeds[0].description;
+
+			await button.update({ embeds: embeds, components: [] });
 			return;
 		}
+
+		let langage = getLangage(userData[userIndex]);
 
 		let validate = (button.customId == 'validate') ? true : false;
 
 		userData[userIndex].verified = 'Oui';
 		userData[userIndex].status = validate ? 'Membre' : 'Refusé';
 
+		await button.update({ embeds: button.message.embeds, components: [] })
+
+		if(!sendMailBeforeValidation)
+		{
+			if(userData[userIndex].send == "En Attente")
+			{
+				if(validate)
+				{					
+					let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
+					let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + userData[userIndex].firstName + ' ' + userData[userIndex].name});
+					userData[userIndex].invite = 'https://discord.gg/' + invite.code;
+
+					let emailError = await MailManager.sendMail(userData[userIndex].mail, mailSubject[langage], mailText[langage].replace('%%L', userData[userIndex].invite));
+
+					if(emailError == null)
+					{
+						userData[userIndex].send = "Envoyé";
+					}
+					else
+					{
+						userData[userIndex].send = "Erreur";
+						await validMemberChannel.send("Error with sending email : " + emailError);
+					}
+				}
+				else
+				{
+					userData[userIndex].invite = '-';
+				}
+
+				SheetManager.updateUserLinks(guildData.sheetInformations, userData[userIndex]);
+			}
+		}
+
 		SheetManager.updateUserVerification(guildData.sheetInformations, userData[userIndex]);
 
 		let tag = button.message.embeds[0].description.split('\n')[0].substring(6);
 
-		button.update({ embeds: [createResumeInviteEmbed(userData[userIndex], tag)], components: [] });
+		await button.editReply({ embeds: [createResumeInviteEmbed(userData[userIndex], tag)], components: [] });
 	});
 
 	actualValidationCollector = validationCollector;
@@ -196,7 +235,7 @@ async function checkNewUsers(dataManager, guild)
 
 	for(let i = userData.length; i < newUserData.length; i++)
 	{
-		if(newUserData[i].send != "En Attente")
+		if(newUserData[i].verified == "Oui")
 		{
 			continue;
 		}
@@ -204,30 +243,34 @@ async function checkNewUsers(dataManager, guild)
 		newUserData[i].verified = "Non";
 		newUserData[i].status = "En Attente";
 
-		let langage = (newUserData[i].langage == "Français") ? "FR" : "EN";
+		let langage = getLangage(newUserData[i]);
 
-		let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
-		let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
-		newUserData[i].invite = 'https://discord.gg/' + invite.code;
-
-		let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
-
-		if(emailError == null)
+		if(sendMailBeforeValidation)
 		{
-			newUserData[i].send = "Envoyé";
+			let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
+			let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
+			newUserData[i].invite = 'https://discord.gg/' + invite.code;
+
+			let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
+
+			if(emailError == null)
+			{
+				newUserData[i].send = "Envoyé";
+			}
+			else
+			{
+				newUserData[i].send = "Erreur";
+				await validMemberChannel.send("Error with sending email : " + emailError);
+			}
 		}
 		else
 		{
-			newUserData[i].send = "Erreur";
+			newUserData[i].invite = "En attente de validation";
+			newUserData[i].send = "En Attente";
 		}
 
 		let newMessage = await validMemberChannel.send({ embeds: [createResumeInviteEmbed(newUserData[i], "Pas sur le discord")], components: [validationButtons] });
 		newUserData[i].message = newMessage.id;
-
-		if(emailError != null)
-		{
-			await validMemberChannel.send("Error with sending email : " + emailError);
-		}
 
 		SheetManager.updateUserVerification(guildData.sheetInformations, newUserData[i]);
 		SheetManager.updateUserLinks(guildData.sheetInformations, newUserData[i]);
@@ -320,7 +363,7 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	let dmChannel = await guildMember.createDM();
 
-	let langage = (userInfos.langage == "Français") ? "FR" : "EN";
+	let langage = getLangage(userInfos);
 
 	let nameRow = new MessageActionRow()
 		.addComponents([
@@ -413,6 +456,11 @@ function createResumeInviteEmbed(userData, pseudo)
 	result.description += "Statut Email : " + userData.send + '\n';
 
 	return result;
+}
+
+function getLangage(userInfos)
+{
+	return (userInfos.langage == "Français") ? "FR" : "EN";
 }
 
 module.exports = 
