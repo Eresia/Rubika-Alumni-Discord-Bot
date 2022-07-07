@@ -174,8 +174,15 @@ async function refreshCommands()
 
 async function refreshCommandForGuild(guild)
 {
-	await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
-	console.log('Successfully registered application commands for guild ' + guild.name);
+	try
+	{
+		await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
+		console.log('Successfully registered application commands for guild ' + guild.name);
+	}
+	catch
+	{
+		console.log('Can\'t registered command for guild ' + guild.name);
+	}
 }
 
 client.login(token);

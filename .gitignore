@@ -2,6 +2,8 @@
 .vscode/
 node_modules/
 config.json
+test_config.json
+alumni_config.json
 credentials.json
 sheet.json
 mail_user.json
