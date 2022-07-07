@@ -1,7 +1,7 @@
 # Discord Bot for Rubika Alumni server
 
 ## Configuration files:
-To launch the bot, you need three configuration files :
+To launch the bot, you need three configuration files:
 
 ### config.json
 ```json
@@ -64,11 +64,11 @@ For setup basic necessary roles. Syntax:
 /role <role-command> <RoleTag>
 ```
 
-- game : role for game formation
-- animation : role for animation formation
-- design : role for design formation
-- ambassador : role for ambassadors
-- bot-event : role for bot event
+- game: role for game formation
+- animation: role for animation formation
+- design: role for design formation
+- ambassador: role for ambassadors
+- bot-event: role for bot event
 
 #### Channel commands
 
@@ -78,22 +78,22 @@ For setup basic necessary roles. Syntax:
 /channel <role-command> <ChannelTag>
 ```
 
-- valid-member : admin channel for member validation infos
-- invite : channel for invites
+- valid-member: admin channel for member validation infos
+- invite: channel for invites
 
 #### Usefull commands
 
 ```
-new-city : Add role and channels for a new city + generate commands for autorole bot.
-Syntax : /new-city <emoji> <location> <city-name>
+new-city: Add role and channels for a new city + generate commands for autorole bot.
+Syntax: /new-city <emoji> <location> <city-name>
 ```
 
 ```
-embed : Generate embed message.
-Syntax : /embed [title] [description] ([field1-title] [field1-description] [field1-inline]) ([field2-title] [field2-description] [field2-inline])...
+embed: Generate embed message.
+Syntax: /embed [title] [description] ([field1-title] [field1-description] [field1-inline]) ([field2-title] [field2-description] [field2-inline])...
 ```
 
 ```
-generatelink : Generate Unique Discord Link for channel set.
-Syntax : /generatelink <channel>
+generatelink: Generate Unique Discord Link for channel set.
+Syntax: /generatelink <channel>
 ```
