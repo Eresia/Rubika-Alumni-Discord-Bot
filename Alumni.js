@@ -9,7 +9,7 @@ const DataManager = require('./scripts/data-manager.js');
 const AlumniCheck = require('./scripts/alumni-check.js');
 const { clientId, token } = require('./config.json');
 
-const needRefreshCommands = true;
+const needRefreshCommands = false;
 
 const guildValues = 
 [
