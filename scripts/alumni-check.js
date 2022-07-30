@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { MessageEmbed } = require('discord.js');
 
 const SheetManager = require('./sheet.js');
@@ -6,19 +7,19 @@ const MailManager =  require('./mail-manager.js')
 
 const { MessageActionRow, MessageButton } = require('discord.js');
 
-const timeBeetweenSheetRefresh = 10000;
+const timeBeetweenSheetRefresh = 60000;
 const sendMailBeforeValidation = false;
 
 const mailSubject =
 {
-	FR: "Lien d'invitation sur le Discord Rubika Alumni",
-	EN: "Invite Link for Rubika Alumni Discord"
+	FR: "Rubika Alumni : Inscription confirmée !",
+	EN: "Rubika Alumni: Registration confirmed!"
 }
 
 const mailText =
 {
-	FR: "Bienvenue sur le discord, voici votre lien d'invitation unique : %%L",
-	EN: "Welcome to the Discord, this is your unique invitation link: %%L"
+	FR: fs.readFileSync('./mail-fr.alumni', 'utf8'),
+	EN: fs.readFileSync('./mail-en.alumni', 'utf8')
 }
 
 const canUseName = 
@@ -30,7 +31,7 @@ const canUseName =
 const confirmName = 
 {
 	FR: 'J\'accepte d\'être renommé·e %%N',
-	EN: 'I accept to be rename %%N'
+	EN: 'I accept to be renamed %%N'
 }
 
 const declineName = 
@@ -149,7 +150,7 @@ async function initValidationCollector(dataManager, guild)
 					let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + userData[userIndex].firstName + ' ' + userData[userIndex].name});
 					userData[userIndex].invite = 'https://discord.gg/' + invite.code;
 
-					let emailError = await MailManager.sendMail(userData[userIndex].mail, mailSubject[langage], mailText[langage].replace('%%L', userData[userIndex].invite));
+					let emailError = await MailManager.sendMail(userData[userIndex].mail, mailSubject[langage], mailText[langage].replaceAll('%%L', userData[userIndex].invite));
 
 					if(emailError == null)
 					{
@@ -223,14 +224,15 @@ async function checkNewUsers(dataManager, guild)
 			new MessageButton()
 				.setCustomId('validate')
 				.setLabel('Valider')
-				.setStyle('PRIMARY'),
+				.setStyle('SUCCESS'),
 
 			new MessageButton()
 				.setCustomId('reject')
 				.setLabel('Refuser')
-				.setStyle('PRIMARY'),
+				.setStyle('DANGER'),
 		]);
 
+	await SheetManager.refreshSheetMacro(guildData.sheetInformations, userData[userData.length - 1].id - 1);
 	let newUserData = await SheetManager.getActualFormResults(guildData.sheetInformations);
 
 	for(let i = userData.length; i < newUserData.length; i++)
@@ -253,7 +255,7 @@ async function checkNewUsers(dataManager, guild)
 
 			if(newUserData[i].send != "Envoyé" && newUserData[i].send != "Erreur")
 			{
-				let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replace('%%L', newUserData[i].invite));
+				let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replaceAll('%%L', newUserData[i].invite));
 
 				if(emailError == null)
 				{
@@ -454,6 +456,7 @@ function createResumeInviteEmbed(userData, pseudo)
 	result.description += "Vérifié : " + userData.verified + '\n';
 	result.description += "Statut : " + userData.status + '\n';
 	result.description += "Filière : " + userData.school + '\n\n';
+	result.description += "Langue : " + userData.langage + '\n\n';
 	result.description += "Lien d'invitation : " + userData.invite + '\n\n';
 
 	result.description += "Statut Email : " + userData.send + '\n';

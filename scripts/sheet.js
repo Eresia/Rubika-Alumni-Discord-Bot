@@ -1,6 +1,6 @@
 const fs = require('fs');
 const readline = require('readline');
-const {google} = require('googleapis');
+const { google } = require('googleapis');
 
 const sheetKeys = 
 {
@@ -106,7 +106,7 @@ async function getNewToken(oAuth2Client, callback, callbackParameters)
 async function getSheetData(auth, parameters)
 {
 	let sheets = google.sheets({version: 'v4', auth});
-	let promise = new Promise(function(resolve)
+	return new Promise(function(resolve)
 	{
 		sheets.spreadsheets.values.get(
 		{
@@ -124,9 +124,7 @@ async function getSheetData(auth, parameters)
 
 			resolve(res.data.values);
 		});
-	})
-
-	return await promise;
+	});
 }
 
 function updateSheetData(auth, parameters) 
@@ -149,7 +147,7 @@ function updateSheetData(auth, parameters)
 	});
 }
 
-function clearSheetData(auth, info) 
+function clearSheetData(auth, parameters) 
 {
 	let sheets = google.sheets({version: 'v4', auth});
 	sheets.spreadsheets.values.clear(
@@ -165,6 +163,56 @@ function clearSheetData(auth, info)
 			return;
 		}
 	});
+}
+
+async function refreshMacro(auth, parameters)
+{
+	let sheets = google.sheets({version: 'v4', auth});
+
+	return await sheets.spreadsheets.batchUpdate(
+	{
+		spreadsheetId: parameters.sheet.link,
+		resource:
+		{
+			requests: 
+			[
+				{
+					autoFill: 
+					{
+						useAlternateSeries: false,
+						sourceAndDestination:
+						{
+							source: 
+							{
+								sheetId: parameters.sheet.pageId,
+								startRowIndex: parameters.startRowIndex,
+								endRowIndex: parameters.startRowIndex + 1,
+								startColumnIndex: 2,
+								endColumnIndex: 13
+							},
+							dimension: 'ROWS',
+							fillLength: 3
+						}
+					}
+				}
+			]
+		}
+	});
+}
+
+async function refreshSheetMacro(sheetInformations, startRowIndex)
+{
+	let parameters = {};
+	parameters.sheet = {link: sheetInformations.link, pageId: sheetInformations.pageId};
+	parameters.startRowIndex = startRowIndex;
+
+	let credentials = await fs.promises.readFile('credentials.json');
+	await authorize(JSON.parse(credentials), refreshMacro, parameters);
+
+	return new Promise(function(resolve)
+	{
+		setTimeout(() => resolve(), 5000);
+	})
 }
 
 async function getActualFormResults(sheetInformations)
@@ -248,6 +296,7 @@ async function updateUserLinks(sheetInformations, userInfos)
 module.exports = 
 {
 	getActualFormResults,
+	refreshSheetMacro,
 	updateUserVerification,
 	updateUserLinks
 }

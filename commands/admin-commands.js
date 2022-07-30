@@ -46,6 +46,12 @@ allCommands.push({
 					.setDescription("Page name of Google Sheet (ex : \"Answer Page\")")
 					.setRequired(true)
 				)
+			.addIntegerOption(option =>
+				option
+					.setName("page-id")
+					.setDescription("Page id of Google Sheet (ex : \"1234567890\")")
+					.setRequired(true)
+				)
 			.addStringOption(option =>
 				option
 					.setName("range-min")
@@ -72,6 +78,7 @@ allCommands.push({
 		
 		let link = interaction.options.getString('link');
 		let page = interaction.options.getString('page');
+		let pageId = interaction.options.getInteger('page-id');
 		let rangeMin = interaction.options.getString('range-min');
 		let rangeMax = interaction.options.getString('range-max');
 
@@ -79,6 +86,7 @@ allCommands.push({
 
 		guildData.sheetInformations.link = link;
 		guildData.sheetInformations.page = page;
+		guildData.sheetInformations.pageId = pageId;
 		guildData.sheetInformations.rangeMin = rangeMin;
 		guildData.sheetInformations.rangeMax = rangeMax;
 		dataManager.writeInData(interaction.guild.id);

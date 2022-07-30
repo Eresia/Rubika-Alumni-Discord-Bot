@@ -66,7 +66,7 @@ async function sendMail(toAddress, subject, text)
 		from: user,
 		to: toAddress,
 		subject: subject,
-		text: text
+		html: text
 	}
 
 	let promise = new Promise(function(resolve)
