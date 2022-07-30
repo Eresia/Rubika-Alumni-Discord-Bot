@@ -368,9 +368,25 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	setMemberSchool(dataManager, guildMember, userInfos.school);
 
-	let validMessage = await DiscordUtils.getMessageById(client, validMemberChannel.id, userInfos.message);
+	let validMessage = null;
+	
+	if(('message' in userInfos) && (userInfos.message != undefined))
+	{
+		validMessage = await DiscordUtils.getMessageById(client, validMemberChannel.id, userInfos.message);
+	}
 
-	validMessage.edit({ embeds: [createResumeInviteEmbed(userInfos, user.tag)], components: validMessage.components });
+	if(validMessage == null)
+	{
+		validMessage = await validMemberChannel.send({ embeds: [createResumeInviteEmbed(userInfos, user.tag)], components: [] });
+		userInfos.message = validMessage.id;
+
+		SheetManager.updateUserVerification(guildData.sheetInformations, userInfos);
+		SheetManager.updateUserLinks(guildData.sheetInformations, userInfos);
+	}
+	else
+	{
+		validMessage.edit({ embeds: [createResumeInviteEmbed(userInfos, user.tag)], components: validMessage.components });
+	}
 
 	let dmChannel = await guildMember.createDM();
 

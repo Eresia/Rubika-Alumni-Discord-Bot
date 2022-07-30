@@ -19,7 +19,7 @@ allCommands.push({
 			return;
 		}
 
-		let invite = await channel.createInvite({maxUses: 1, unique: true});
+		let invite = await channel.createInvite({maxUses: 1, unique: true, maxAge: 0});
 		await interaction.reply("Invation link : https://discord.gg/" + invite);
 	}
 });
