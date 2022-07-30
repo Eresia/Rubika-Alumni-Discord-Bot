@@ -106,7 +106,7 @@ client.on('ready', async function () {
 		invites.delete(guild.id);
 	});
 
-	client.on('guildMemberAdd', function(guildMember)
+	client.on('guildMemberAdd', async function(guildMember)
 	{
 		if(!(guildMember.guild.id in inviteResolvers))
 		{
@@ -120,6 +120,20 @@ client.on('ready', async function () {
 		inviteResolvers[guildMember.guild.id].push(resolver);
 
 		AlumniCheck.askMemberInformations(client, DataManager, promise, guildMember.guild, guildMember);
+
+		await new Promise(function(resolve)
+		{
+			setTimeout(() => resolve(), 5000);
+		});
+
+		for(let i = 0; i < inviteResolvers[guildMember.guild.id].length; i++)
+		{
+			if(inviteResolvers[guildMember.guild.id][i] == resolver)
+			{
+				inviteResolvers[guildMember.guild.id].splice(i, 1);
+				resolver(undefined);
+			}
+		}
 	});
 
 	client.on("inviteCreate", (invite) => {

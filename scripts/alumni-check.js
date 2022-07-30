@@ -25,7 +25,7 @@ const mailText =
 const canUseName = 
 {
 	FR: 'Bonjour. Pour faciliter la reconnaissance de tout le monde, nous souhaiterions modifier votre pseudo sur le serveur sous la forme "Prénom Nom" (%%N). Êtes vous d\'accord ?', 
-	EN: 'Hello. To your pseudo, we advise to use the form "First-Name Last-Name" (%%N) so that everyone can recognize each other. Can we change it for you?'
+	EN: 'Hello. For your pseudo, we advise to use the form "First-Name Last-Name" (%%N) so everyone can recognize each other. Can we change it for you?'
 }
 
 const confirmName = 
@@ -348,6 +348,12 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 	{
 		if(userData[i].invite == inviteCode)
 		{
+			if(userInfos != null)
+			{
+				validMemberChannel.send("Can't find data for user " + user.tag + ' (invite link is used many times)');
+				return;
+			}
+
 			userInfos = userData[i];
 		}
 	}

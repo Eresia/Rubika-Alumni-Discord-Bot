@@ -5,26 +5,20 @@ let allCommands = [];
 
 allCommands.push({
     data: new SlashCommandBuilder()
-			.setName('generatelink')
-			.setDescription('Add new unique invite link')
-			.addChannelOption(option =>
-				option
-					.setName("channel")
-					.setDescription("Channel to invite")
-					.setRequired(true)
-				),
+			.setName('generate-link')
+			.setDescription('Add new unique invite link'),
 	async execute(interaction, dataManager) 
 	{
-		if(!interaction.member.permissions.has("ADMINISTRATOR"))
+		let guildData = dataManager.getServerData(interaction.guild.id);
+
+		let channel = DiscordUtils.getChannelById(interaction.client, guildData.inviteChannel);
+
+		if(channel == null)
 		{
-			if(!DiscordUtils.hasMemberRole(interaction.member, dataManager.getServerData(interaction.guild.id).botManagerRole))
-			{
-				await interaction.reply({ content: 'You don\'t have permission for this command', ephemeral: true });
-				return;
-			}
+			await interaction.reply({ content: 'Invation channel not set, ask to bot administrator', ephemeral: true });
+			return;
 		}
 
-		let channel = interaction.options.getChannel('channel');
 		let invite = await channel.createInvite({maxUses: 1, unique: true});
 		await interaction.reply("Invation link : https://discord.gg/" + invite);
 	}
