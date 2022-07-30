@@ -147,7 +147,7 @@ async function initValidationCollector(dataManager, guild)
 				if(validate)
 				{					
 					let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
-					let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + userData[userIndex].firstName + ' ' + userData[userIndex].name});
+					let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, maxAge: 0, reason: 'Create invitation for ' + userData[userIndex].firstName + ' ' + userData[userIndex].name});
 					userData[userIndex].invite = 'https://discord.gg/' + invite.code;
 
 					let emailError = await MailManager.sendMail(userData[userIndex].mail, mailSubject[langage], mailText[langage].replaceAll('%%L', userData[userIndex].invite));
@@ -250,7 +250,7 @@ async function checkNewUsers(dataManager, guild)
 		if(sendMailBeforeValidation)
 		{
 			let inviteChannel = DiscordUtils.getChannelById(guild.client, guildData.inviteChannel);
-			let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
+			let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, maxAge: 0, reason: 'Create invitation for ' + newUserData[i].firstName + ' ' + newUserData[i].name});
 			newUserData[i].invite = 'https://discord.gg/' + invite.code;
 
 			if(newUserData[i].send != "Envoyé" && newUserData[i].send != "Erreur")
