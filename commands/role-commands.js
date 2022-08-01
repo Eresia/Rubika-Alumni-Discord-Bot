@@ -77,6 +77,7 @@ addRoleCommand('game', 'game', 'gameRole');
 addRoleCommand('animation', 'animation', 'animationRole');
 addRoleCommand('design', 'design', 'designRole');
 addRoleCommand('ambassador', 'ambassador', 'ambassadorRole');
+addRoleCommand('validator', 'validator', 'validatorRole');
 addRoleCommand('bot-event', 'bot event', 'botEventRole');
 
 allCommands.push(allRoleCommand);

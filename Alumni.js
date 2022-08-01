@@ -19,6 +19,7 @@ const guildValues =
 	{name : 'designRole', defaultValue : -1},
 	{name : 'ambassadorRole', defaultValue : -1},
 	{name : 'botEventRole', defaultValue : -1},
+	{name : 'validatorRole', defaultValue : -1},
 	{name : 'inviteChannel', defaultValue : -1},
 	{name : 'validMemberChannel', defaultValue : -1},
 	{name : 'sheetInformations', defaultValue : {}}

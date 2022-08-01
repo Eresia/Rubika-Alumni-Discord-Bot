@@ -9,6 +9,7 @@ const { MessageActionRow, MessageButton } = require('discord.js');
 
 const timeBeetweenSheetRefresh = 60000;
 const sendMailBeforeValidation = false;
+const pingValidators = true;
 
 const mailSubject =
 {
@@ -279,6 +280,12 @@ async function checkNewUsers(dataManager, guild)
 
 		SheetManager.updateUserVerification(guildData.sheetInformations, newUserData[i]);
 		SheetManager.updateUserLinks(guildData.sheetInformations, newUserData[i]);
+
+		if(pingValidators && (guildData.validatorRole != -1))
+		{
+			let pingMessage = await validMemberChannel.send(DiscordUtils.getRoleStringById(guildData.validatorRole));
+			await pingMessage.delete();
+		}
 	}
 
 	userData = newUserData;
