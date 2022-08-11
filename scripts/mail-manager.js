@@ -54,7 +54,7 @@ async function initEmailManager()
 	);
 }
 
-async function sendMail(toAddress, subject, text)
+async function sendMail(toAddress, bccAddress, subject, text)
 {
 	if(transporter == null)
 	{
@@ -67,6 +67,11 @@ async function sendMail(toAddress, subject, text)
 		to: toAddress,
 		subject: subject,
 		html: text
+	}
+
+	if(bccAddress != null)
+	{
+		mailOptions.bcc = bccAddress;
 	}
 
 	let promise = new Promise(function(resolve)

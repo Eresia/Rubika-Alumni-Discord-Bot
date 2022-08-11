@@ -11,6 +11,8 @@ const timeBeetweenSheetRefresh = 60000;
 const sendMailBeforeValidation = false;
 const pingValidators = true;
 
+const bccMail = 'rubika.alumni@gmail.com';
+
 const mailSubject =
 {
 	FR: "Rubika Alumni : Inscription confirmée !",
@@ -151,7 +153,7 @@ async function initValidationCollector(dataManager, guild)
 					let invite = await inviteChannel.createInvite({maxUses: 1, unique: true, maxAge: 0, reason: 'Create invitation for ' + userData[userIndex].firstName + ' ' + userData[userIndex].name});
 					userData[userIndex].invite = 'https://discord.gg/' + invite.code;
 
-					let emailError = await MailManager.sendMail(userData[userIndex].mail, mailSubject[langage], mailText[langage].replaceAll('%%L', userData[userIndex].invite));
+					let emailError = await MailManager.sendMail(userData[userIndex].mail, bccMail, mailSubject[langage], mailText[langage].replaceAll('%%L', userData[userIndex].invite));
 
 					if(emailError == null)
 					{
@@ -256,7 +258,7 @@ async function checkNewUsers(dataManager, guild)
 
 			if(newUserData[i].send != "Envoyé" && newUserData[i].send != "Erreur")
 			{
-				let emailError = await MailManager.sendMail(newUserData[i].mail, mailSubject[langage], mailText[langage].replaceAll('%%L', newUserData[i].invite));
+				let emailError = await MailManager.sendMail(newUserData[i].mail, bccMail, mailSubject[langage], mailText[langage].replaceAll('%%L', newUserData[i].invite));
 
 				if(emailError == null)
 				{
