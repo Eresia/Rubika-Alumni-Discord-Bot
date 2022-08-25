@@ -488,6 +488,7 @@ function createResumeInviteEmbed(userData, pseudo)
 	result.description += "Statut : " + userData.status + '\n';
 	result.description += "Filière : " + userData.school + '\n\n';
 	result.description += "Langue : " + userData.langage + '\n\n';
+	result.description += "Email : " + userData.mail + '\n\n';
 	result.description += "Lien d'invitation : " + userData.invite + '\n\n';
 
 	result.description += "Statut Email : " + userData.send + '\n';
