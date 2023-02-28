@@ -65,6 +65,7 @@ addChannelCommand('valid-member', 'valid member channel', 'validMemberChannel', 
 });
 
 addChannelCommand('invite', 'invite channel', 'inviteChannel');
+addChannelCommand('error-log-channel', 'error log channel', 'errorLogChannel');
 
 allCommands.push(allChannelCommands);
 

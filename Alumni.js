@@ -7,12 +7,16 @@ const LogMessage = require('./scripts/log.js').logMessage;
 const AdminText = require('./scripts/admin-text.js');
 const DataManager = require('./scripts/data-manager.js');
 const AlumniCheck = require('./scripts/alumni-check.js');
+const DiscordUtils = require('./scripts/discord-utils.js');
 const { clientId, token } = require('./config.json');
 
 const needRefreshCommands = false;
+const caughtException = true;
+const sendInitError = true;
 
 const guildValues = 
 [
+	{name : 'errorLogChannel', defaultValue : -1},
 	{name : 'botManagerRole', defaultValue : -1},
 	{name : 'gameRole', defaultValue : -1},
 	{name : 'animationRole', defaultValue : -1},
@@ -172,6 +176,11 @@ client.on('ready', async function () {
 		AlumniCheck.init(DataManager, guild);
 		AlumniCheck.initValidationCollector(DataManager, guild);
 		AlumniCheck.initUserData(DataManager, guild);
+
+		if(sendInitError)
+		{
+			DataManager.logError(guild, 'Initialisation');
+		}
 	});
 });
 
@@ -201,5 +210,28 @@ async function refreshCommandForGuild(guild)
 		console.log('Can\'t registered command for guild ' + guild.name);
 	}
 }
+
+async function logError(guild, error)
+{
+	let guildData = DataManager.getServerData(guild.id);
+	let channel = await DiscordUtils.getChannelById(guild.client, guildData.errorLogChannel);
+
+	if(channel != null)
+	{
+		await channel.send('Info: ' + error);
+	}
+}
+
+if(caughtException)
+{
+	process.once('uncaughtException', async function (err)
+	{
+		await DataManager.logError(await DiscordUtils.getGuildById(client, '638775003600650241'), 'Uncaught exception: ' + err);
+		console.log('Uncaught exception: ' + err);
+		exit(1);
+	});
+}
+
+DataManager.logError = logError;
 
 client.login(token);

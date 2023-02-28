@@ -298,7 +298,7 @@ allCommands.push({
 			parent: category
 		});
 
-		await interaction.guild.channels.create("💼serious-" + city, 
+		/*await interaction.guild.channels.create("💼serious-" + city, 
 		{
 			type: 'GUILD_TEXT',
 			reason: 'Create serious channel for city ' + city,
@@ -312,7 +312,7 @@ allCommands.push({
 			reason: 'Create idées channel for city ' + city,
 			parent: category,
 			rateLimitPerUser: 120
-		});
+		});*/
 
 		await interaction.reply('Création du rôle ' + DiscordUtils.getRoleStringById(role.id) + ' avec succès');
 
