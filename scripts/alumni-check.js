@@ -1,11 +1,11 @@
 const fs = require('fs');
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 const SheetManager = require('./sheet.js');
 const DiscordUtils = require('./discord-utils.js');
 const MailManager =  require('./mail-manager.js')
 
-const { MessageActionRow, MessageButton } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const timeBeetweenSheetRefresh = 60000;
 const sendMailBeforeValidation = false;
@@ -222,17 +222,17 @@ async function checkNewUsers(dataManager, guild)
 		return;
 	}
 
-	let validationButtons = new MessageActionRow()
+	let validationButtons = new ActionRowBuilder()
 		.addComponents([
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId('validate')
 				.setLabel('Valider')
-				.setStyle('SUCCESS'),
+				.setStyle(ButtonStyle.Success),
 
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId('reject')
 				.setLabel('Refuser')
-				.setStyle('DANGER'),
+				.setStyle(ButtonStyle.Danger),
 		]);
 
 	await SheetManager.refreshSheetMacro(guildData.sheetInformations, userData[userData.length - 1].id - 1);
@@ -401,17 +401,17 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 	let langage = getLangage(userInfos);
 
-	let nameRow = new MessageActionRow()
+	let nameRow = new ActionRowBuilder()
 		.addComponents([
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId('YES')
 				.setLabel(confirmName[langage].replace('%%N', fullName))
-				.setStyle('PRIMARY'),
+				.setStyle(ButtonStyle.Primary),
 
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId('NO')
 				.setLabel(declineName[langage])
-				.setStyle('PRIMARY')
+				.setStyle(ButtonStyle.Primary)
 		]);
 
 	const canUseNameFilter = function(button){return ((button.customId === 'YES' || button.customId === 'NO'))};
@@ -479,7 +479,7 @@ async function askMemberInformations(client, dataManager, invitePromise, guild, 
 
 function createResumeInviteEmbed(userData, pseudo)
 {
-	let result = new MessageEmbed();
+	let result = new EmbedBuilder();
 
 	result.title = userData.firstName + ' ' + userData.name;
 

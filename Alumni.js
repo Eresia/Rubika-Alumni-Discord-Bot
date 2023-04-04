@@ -1,18 +1,62 @@
 const path = require('path');
 const fs = require('fs');
-const { Client, Collection, Intents } = require('discord.js');
-const { REST } = require('@discordjs/rest');
+const { Client, Events, Collection, GatewayIntentBits, REST } = require('discord.js');
 const { Routes } = require('discord-api-types/v9');
 const LogMessage = require('./scripts/log.js').logMessage;
 const AdminText = require('./scripts/admin-text.js');
 const DataManager = require('./scripts/data-manager.js');
 const AlumniCheck = require('./scripts/alumni-check.js');
 const DiscordUtils = require('./scripts/discord-utils.js');
-const { clientId, token } = require('./config.json');
+const { exit } = require('process');
 
 const needRefreshCommands = false;
 const caughtException = true;
 const sendInitError = true;
+
+if(!fs.existsSync('config.json'))
+{
+	let basic_config = {};
+	basic_config.clientId = "";
+	basic_config.token = "";
+	basic_config.errorLogGuild = "";
+
+	fs.writeFileSync('config.json', JSON.stringify(basic_config, null, 4));
+
+	console.log('Need to fill config.json with discord bot informations');
+	exit(0);
+}
+
+const config = JSON.parse(fs.readFileSync('./config.json'));
+
+if(!('clientId' in config) || !('token' in config))
+{
+	if(!('clientId' in config))
+	{
+		config.clientId = "";
+	}
+
+	if(!('token' in config))
+	{
+		config.token = "";
+	}
+
+	fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+	console.log('Need to fill config.json with discord bot informations');
+	return;
+}
+
+if(config.clientId.length == 0 || config.token.length == 0)
+{
+	console.log('Need to fill config.json with discord bot informations');
+	exit(0);
+}
+
+if(!('errorLogGuild' in config) || config.errorLogGuild.length == 0)
+{
+	config.errorLogGuild = "";
+	fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+	console.log('No error log guild specified');
+}
 
 const guildValues = 
 [
@@ -32,15 +76,15 @@ const guildValues =
 const invites = new Collection();
 const inviteResolvers = {}
 
-const rest = new REST({ version: '9' }).setToken(token);
+const rest = new REST({ version: '9' }).setToken(config.token);
 const client = new Client({ intents: 
 	[
-		Intents.FLAGS.GUILDS, 
-		Intents.FLAGS.GUILD_MESSAGES, 
-		Intents.FLAGS.GUILD_MESSAGE_REACTIONS, 
-		Intents.FLAGS.GUILD_INVITES, 
-		Intents.FLAGS.GUILD_MEMBERS, 
-		Intents.FLAGS.DIRECT_MESSAGES 
+		GatewayIntentBits.Guilds, 
+		GatewayIntentBits.GuildMessages, 
+		GatewayIntentBits.GuildMessageReactions, 
+		GatewayIntentBits.GuildInvites, 
+		GatewayIntentBits.GuildMembers, 
+		GatewayIntentBits.DirectMessages 
 	] 
 });
 
@@ -69,9 +113,9 @@ client.on('ready', async function () {
 
 	await refreshCommands();
 
-	client.on('interactionCreate', async function(interaction)
-	{
-		if(!interaction.isCommand())
+	client.on(Events.InteractionCreate, async function(interaction)
+	{		
+		if(!interaction.isCommand() && !interaction.isUserContextMenuCommand())
 		{
 			return;
 		}
@@ -83,18 +127,35 @@ client.on('ready', async function () {
 			return;
 		}
 
-		try {
+		try 
+		{
 			await command.execute(interaction, DataManager);
-
-		} catch (error) {
-			console.error(error);
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		} 
+		catch (executionError) {
+			console.error(executionError);
+			try 
+			{
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				DataManager.logError(interaction.guild, 'Command ' + interaction.commandName + ' Error :\n\n' + executionError);
+			} 
+			catch(replyError)
+			{
+				try 
+				{
+					await interaction.editReply('There was an error while executing this command!');
+					DataManager.logError(interaction.guild, 'Command ' + interaction.commandName + ' Error :\n\n' + replyError + '\n' + executionError);
+				}
+				catch(cantReplyError)
+				{
+					DataManager.logError(interaction.guild, 'Command ' + interaction.commandName + ' Error : Answer is too long');
+				}
+			}
 		}
 	});
 	
 	AdminText.displayDiscordMessages(client);
 
-	client.on('guildCreate', function(guild)
+	client.on(Events.GuildCreate, function(guild)
 	{
 		DataManager.initGuildData(guild.id);
 		refreshCommandForGuild(guild);
@@ -104,14 +165,14 @@ client.on('ready', async function () {
 		})
 	});
 
-	client.on('guildDelete', function(guild)
+	client.on(Events.GuildDelete, function(guild)
 	{
 		DataManager.removeGuildData(guild.id);
 
 		invites.delete(guild.id);
 	});
 
-	client.on('guildMemberAdd', async function(guildMember)
+	client.on(Events.GuildMemberAdd, async function(guildMember)
 	{
 		if(!(guildMember.guild.id in inviteResolvers))
 		{
@@ -141,11 +202,11 @@ client.on('ready', async function () {
 		}
 	});
 
-	client.on("inviteCreate", (invite) => {
+	client.on(Events.InviteCreate, (invite) => {
 		invites.get(invite.guild.id).set(invite.code, {maxUses: invite.maxUses, inviterId: invite.inviter.id});
 	});
 
-	client.on("inviteDelete", function(invite) {
+	client.on(Events.InviteDelete, function(invite) {
 		if(!(invite.guild.id in inviteResolvers))
 		{
 			return;
@@ -202,7 +263,7 @@ async function refreshCommandForGuild(guild)
 {
 	try
 	{
-		await rest.put(Routes.applicationGuildCommands(clientId, guild.id), { body: commandData });
+		await rest.put(Routes.applicationGuildCommands(config.clientId, guild.id), { body: commandData });
 		console.log('Successfully registered application commands for guild ' + guild.name);
 	}
 	catch
@@ -222,11 +283,11 @@ async function logError(guild, error)
 	}
 }
 
-if(caughtException)
+if(caughtException && config.errorLogGuild.length > 0)
 {
 	process.once('uncaughtException', async function (err)
 	{
-		await DataManager.logError(await DiscordUtils.getGuildById(client, '638775003600650241'), 'Uncaught exception: ' + err);
+		await DataManager.logError(await DiscordUtils.getGuildById(client, config.errorLogGuild), 'Uncaught exception: ' + err);
 		console.log('Uncaught exception: ' + err);
 		exit(1);
 	});
@@ -234,4 +295,4 @@ if(caughtException)
 
 DataManager.logError = logError;
 
-client.login(token);
+client.login(config.token);

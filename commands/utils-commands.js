@@ -1,6 +1,5 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
 const DiscordUtils = require('../scripts/discord-utils.js');
-const { MessageEmbed, Permissions } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField, SlashCommandBuilder } = require('discord.js');
 
 let allCommands = [];
 
@@ -85,7 +84,7 @@ allCommands.push({
 			}
 		}
 
-		let embed = new MessageEmbed();
+		let embed = new EmbedBuilder();
 
 		let title = interaction.options.getString('title');
 		let description = interaction.options.getString('description');
@@ -104,8 +103,8 @@ allCommands.push({
 
 			let field = 
 			{
-				title: (fieldTitle == null) ? emptyMessage : fieldTitle,
-				description: (fieldDescription == null) ? emptyMessage : fieldDescription,
+				name: (fieldTitle == null) ? emptyMessage : fieldTitle.replaceAll('\\n', '\n'),
+				value: (fieldDescription == null) ? emptyMessage : fieldDescription.replaceAll('\\n', '\n'),
 				inline: (fieldInline == null) ? false : fieldInline
 			}
 
@@ -114,17 +113,17 @@ allCommands.push({
 
 		if(title != null)
 		{
-			embed.setTitle(title);
+			embed.setTitle(title.replaceAll('\\n', '\n'));
 		}
 
 		if(description != null)
 		{
-			embed.setDescription(description);
+			embed.setDescription(description.replaceAll('\\n', '\n'));
 		}
 
-		for(let i = 0; i < fields.length; i++)
+		if(fields.length != 0)
 		{
-			embed.addField(fields[i].title, fields[i].description, fields[i].inline);
+			embed.addFields(fields);
 		}
 
 		if(embed.length == 0)
@@ -236,16 +235,16 @@ allCommands.push({
 					id: interaction.guild.id,
 					deny: 
 					[
-						Permissions.FLAGS.VIEW_CHANNEL, 
-						Permissions.FLAGS.SEND_MESSAGES
+						PermissionsBitField.Flags.ViewChannel, 
+						PermissionsBitField.Flags.SendMessages
 					]
 				},
 				{
 					id: role.id,
 					allow: 
 					[
-						Permissions.FLAGS.VIEW_CHANNEL, 
-						Permissions.FLAGS.SEND_MESSAGES
+						PermissionsBitField.Flags.ViewChannel, 
+						PermissionsBitField.Flags.SendMessages
 					]
 				}
 			]
@@ -262,30 +261,30 @@ allCommands.push({
 					id: interaction.guild.id,
 					deny: 
 					[
-						Permissions.FLAGS.VIEW_CHANNEL, 
-						Permissions.FLAGS.SEND_MESSAGES
+						PermissionsBitField.Flags.ViewChannel, 
+						PermissionsBitField.Flags.SendMessages
 					]
 				},
 				{
 					id: role.id,
 					allow: 
 					[
-						Permissions.FLAGS.VIEW_CHANNEL
+						PermissionsBitField.Flags.ViewChannel
 					]
 				},
 				{
 					id: guildData.ambassadorRole,
 					allow: 
 					[
-						Permissions.FLAGS.SEND_MESSAGES
+						PermissionsBitField.Flags.SendMessages
 					]
 				},
 				{
 					id: guildData.botEventRole,
 					allow: 
 					[
-						Permissions.FLAGS.VIEW_CHANNEL,
-						Permissions.FLAGS.SEND_MESSAGES
+						PermissionsBitField.Flags.ViewChannel,
+						PermissionsBitField.Flags.SendMessages
 					]
 				}
 			]
