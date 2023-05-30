@@ -481,17 +481,19 @@ function createResumeInviteEmbed(userData, pseudo)
 {
 	let result = new EmbedBuilder();
 
-	result.title = userData.firstName + ' ' + userData.name;
+	result.setTitle(userData.firstName + ' ' + userData.name);
 
-	result.description = 'Tag : ' + pseudo + '\n';
-	result.description += "Vérifié : " + userData.verified + '\n';
-	result.description += "Statut : " + userData.status + '\n';
-	result.description += "Filière : " + userData.school + '\n\n';
-	result.description += "Langue : " + userData.langage + '\n\n';
-	result.description += "Email : " + userData.mail + '\n\n';
-	result.description += "Lien d'invitation : " + userData.invite + '\n\n';
+	let description = 'Tag : ' + pseudo + '\n';
+	description += "Vérifié : " + userData.verified + '\n';
+	description += "Statut : " + userData.status + '\n';
+	description += "Filière : " + userData.school + '\n\n';
+	description += "Langue : " + userData.langage + '\n\n';
+	description += "Email : " + userData.mail + '\n\n';
+	description += "Lien d'invitation : " + userData.invite + '\n\n';
 
-	result.description += "Statut Email : " + userData.send + '\n';
+	description += "Statut Email : " + userData.send + '\n';
+
+	result.setDescription(description);
 
 	return result;
 }
