@@ -67,6 +67,7 @@ const guildValues =
 	{name : 'designRole', defaultValue : -1},
 	{name : 'ambassadorRole', defaultValue : -1},
 	{name : 'botEventRole', defaultValue : -1},
+	{name : 'alumniRole', defaultValue : -1},
 	{name : 'validatorRole', defaultValue : -1},
 	{name : 'inviteChannel', defaultValue : -1},
 	{name : 'validMemberChannel', defaultValue : -1},
@@ -179,11 +180,17 @@ client.on('ready', async function () {
 			inviteResolvers[guildMember.guild.id] = [];
 		}
 
+		let guildData = DataManager.getServerData(guildMember.guild.id);
 		let resolver;
 
 		let promise = new Promise(function(resolve){resolver = resolve;});
 
 		inviteResolvers[guildMember.guild.id].push(resolver);
+
+		if(guildData.alumniRole != -1)
+		{
+			await guildMember.roles.add(guildData.alumniRole);
+		}
 
 		AlumniCheck.askMemberInformations(client, DataManager, promise, guildMember.guild, guildMember);
 

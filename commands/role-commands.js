@@ -79,6 +79,7 @@ addRoleCommand('design', 'design', 'designRole');
 addRoleCommand('ambassador', 'ambassador', 'ambassadorRole');
 addRoleCommand('validator', 'validator', 'validatorRole');
 addRoleCommand('bot-event', 'bot event', 'botEventRole');
+addRoleCommand('alumni', 'alumni', 'alumniRole');
 
 allCommands.push(allRoleCommand);
 
