@@ -294,8 +294,9 @@ if(caughtException && config.errorLogGuild.length > 0)
 {
 	process.once('uncaughtException', async function (err)
 	{
-		await DataManager.logError(await DiscordUtils.getGuildById(client, config.errorLogGuild), 'Uncaught exception: ' + err);
-		console.log('Uncaught exception: ' + err);
+		await DataManager.logError(await DiscordUtils.getGuildById(client, config.errorLogGuild), 'Uncaught exception: ' + err.message + '\Exception stack: ' + err.stack);
+		console.log('Uncaught exception: ' + err.message);
+		console.log('Exception stack: ' + err.stack);
 		exit(1);
 	});
 }
