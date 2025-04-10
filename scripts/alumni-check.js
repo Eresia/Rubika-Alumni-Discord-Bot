@@ -238,6 +238,11 @@ async function checkNewUsers(dataManager, guild)
 	await SheetManager.refreshSheetMacro(guildData.sheetInformations, userData[userData.length - 1].id - 1);
 	let newUserData = await SheetManager.getActualFormResults(guildData.sheetInformations);
 
+	if(newUserData.length == 0)
+	{
+		return;
+	}
+
 	for(let i = userData.length; i < newUserData.length; i++)
 	{
 		if(newUserData[i].verified == "Oui")
